@@ -1,0 +1,83 @@
+# vscode
+.vscode
+
+# Intellij
+*.iml
+.idea
+
+# npm
+node_modules
+
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
+main.js
+
+# Don't include the generated styles.css file in the repo.
+# It's built from source files in styles/ directory during CI/build process.
+styles.css
+
+# Release notes are part of the source tree.
+!src/releaseNotes.ts
+!THIRD-PARTY-NOTICES.md
+build-metadata.json
+dist/
+.release-check/
+
+# Exclude sourcemaps
+*.map
+
+# obsidian
+data.json
+
+# Exclude macOS Finder (System Explorer) View States
+.DS_Store
+._*
+obsidian-developer-docs/
+.claude
+
+# Exclude video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.flv
+*.wmv
+CLAUDE.md
+coverage
+
+# Documentation planning files
+documentation-images-needed.md
+plans
+
+# Upstream documentation and test fixtures are not part of the plugin package.
+docs/
+issue-analysis/
+
+# Project planning files
+project
+webhook*.log
+
+
+# Exclude local test vaults and e2e cache artifacts
+external/tasknotes-e2e/.e2e/
+C/
+.copy-files.local
+.augment
+# Test output files
+jest-out.txt
+BASES_API_DOCUMENTATION.md
+BASES_API_EXPLORATION.md
+BASES_API_MIGRATION.md
+OBSIDIAN-SERVER-README.md
+obsidian-help
+Tasknotes-Development-Guidelines.md
+V4_PLANNING.md
+GITHUB_ROADMAP_ISSUE_TEMPLATE.md
+I18N_GUIDE.md
+mkdocs.yml
+PRIVACY.md
+tasknotes-*.svg
+test-*.md
+test-*.js
+i18n.state.json

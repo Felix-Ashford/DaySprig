@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: DaySprig documentation
+    url: https://github.com/Felix-Ashford/DaySprig#readme
+    about: Read the DaySprig setup and compatibility notes
+  - name: GitHub Discussions
+    url: https://github.com/Felix-Ashford/DaySprig/discussions
+    about: Ask questions, share ideas, or discuss DaySprig with the community

@@ -1,0 +1,43 @@
+name: DaySprig draft release
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+
+permissions:
+  contents: write
+
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npm test -- --runInBand
+      - run: npm run release:package
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+      - run: git diff --exit-code -- THIRD-PARTY-NOTICES.md
+      - name: Create draft prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/daysprig/main.js
+            dist/daysprig/manifest.json
+            dist/daysprig/styles.css
+            dist/daysprig/LICENSE
+            dist/daysprig/NOTICE.md
+            dist/daysprig/THIRD-PARTY-NOTICES.md
+            dist/daysprig/THIRD-PARTY-SOURCE.md
+            dist/ical.js-*-source.tar.gz
+          fail_on_unmatched_files: true
+          draft: true
+          prerelease: true

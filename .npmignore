@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build-metadata.json
+.release-check/
+data.json
+main.js
+styles.css
+*.map

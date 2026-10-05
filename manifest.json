@@ -1,0 +1,10 @@
+{
+	"id": "daysprig",
+	"name": "DaySprig",
+	"version": "0.1.0",
+	"minAppVersion": "1.5.0",
+	"description": "A note-based task calendar with reminders and daily checklists.",
+	"author": "Felix-Ashford",
+	"isDesktopOnly": true
+}
+

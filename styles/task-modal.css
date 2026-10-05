@@ -1,0 +1,746 @@
+/* =====================================================================
+   TASK MODAL - Google Keep/Todoist Inspired
+   ===================================================================== */
+
+/* Fix suggestion text truncation */
+.suggestion-item .nlp-suggest-text {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    width: auto;
+}
+
+.tasknotes-plugin .minimalist-task-modal {
+    /* Modal container adjustments */
+}
+
+/* Modal header with TaskNotes icon */
+.modal-header-container {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
+    margin-bottom: var(--size-4-3);
+}
+
+.modal-header-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+    color: var(--color-accent);
+    width: 20px;
+    height: 20px;
+}
+
+.modal-header-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+    color: var(--color-accent);
+}
+
+/* User fields section styling */
+.user-fields-separator {
+    margin-top: var(--size-4-4);
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: var(--size-4-3);
+}
+
+.detail-label-section {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin-bottom: var(--size-4-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-header-icon .svg-icon {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.modal-header-icon .daysprig-simple {
+    width: 20px !important;
+    height: 20px !important;
+    color: var(--color-accent) !important;
+}
+
+.modal-header-title {
+    font-size: var(--font-ui-larger);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-normal);
+}
+
+.tasknotes-plugin .minimalist-task-modal .modal-content {
+    padding: 0;
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-l);
+    min-width: 480px;
+    max-width: 600px;
+}
+
+.tasknotes-plugin .minimalist-modal-container {
+    padding: var(--size-4-4);
+}
+
+/* =====================================================================
+   TITLE INPUT - PRIMARY FOCUS
+   ===================================================================== */
+
+.tasknotes-plugin .title-input-container {
+    margin-bottom: var(--size-4-3);
+}
+
+.tasknotes-plugin .title-input {
+    width: 100%;
+    padding: var(--size-4-2) var(--size-4-1);
+    font-size: var(--font-ui-large);
+    font-weight: 500;
+    line-height: 1.4;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-normal);
+    resize: none;
+    min-height: 44px;
+    transition: all 0.2s ease;
+}
+
+.tasknotes-plugin .title-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.tasknotes-plugin .title-input:focus {
+    background: var(--background-modifier-hover);
+    border-radius: var(--radius-s);
+}
+
+
+/* =====================================================================
+   OPEN NOTE BUTTON (IN BUTTON BAR)
+   ===================================================================== */
+
+.tasknotes-plugin .open-note-button {
+    padding: var(--size-4-2) var(--size-4-3);
+    font-weight: 500;
+    border: 1px solid var(--interactive-accent);
+    border-radius: var(--radius-s);
+    background: transparent;
+    color: var(--interactive-accent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.tasknotes-plugin .open-note-button:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: 1px solid var(--interactive-accent);
+}
+
+.tasknotes-plugin .open-note-button:active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: 1px solid var(--interactive-accent);
+}
+
+.tasknotes-plugin .open-note-button:focus-visible {
+	box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
+}
+
+.tasknotes-plugin .archive-button:focus-visible {
+	box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
+}
+
+.tasknotes-plugin .button-spacer {
+    flex: 1;
+}
+
+/* =====================================================================
+   ACTION BUTTONS
+   ===================================================================== */
+
+.tasknotes-plugin .button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--size-4-2);
+    margin-top: var(--size-4-4);
+    padding-top: var(--size-4-3);
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Use consistent button system with primary accent background preserved */
+.tasknotes-plugin .save-button {
+    background: var(--tn-interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    box-shadow: none;
+    min-width: 80px;
+}
+
+.tasknotes-plugin .save-button:hover {
+    background: var(--tn-interactive-accent-hover);
+    box-shadow: none;
+}
+
+.tasknotes-plugin .save-button:focus-visible {
+	box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
+}
+
+.tasknotes-plugin .cancel-button {
+    background: transparent;
+    color: var(--tn-text-normal);
+    border: none;
+    box-shadow: none;
+    min-width: 80px;
+}
+
+.tasknotes-plugin .cancel-button:hover {
+    background: var(--tn-interactive-hover);
+    box-shadow: none;
+}
+
+.tasknotes-plugin .cancel-button:focus-visible {
+	box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
+}
+
+/* =====================================================================
+   MODAL EXPANSION ANIMATION
+   ===================================================================== */
+
+.tasknotes-plugin .minimalist-task-modal .modal-content {
+    transition: all 0.3s ease;
+}
+
+.tasknotes-plugin .minimalist-task-modal.expanded .modal-content {
+    min-height: 400px;
+}
+
+/* =====================================================================
+   RESPONSIVE DESIGN
+   ===================================================================== */
+
+@media (max-width: 600px) {
+    .tasknotes-plugin .minimalist-task-modal .modal-content {
+        min-width: 90vw;
+        max-width: 90vw;
+    }
+    
+    .tasknotes-plugin .minimalist-modal-container {
+        padding: var(--size-4-3);
+    }
+    
+    .tasknotes-plugin .button-container {
+        flex-direction: column;
+    }
+    
+    .tasknotes-plugin .save-button,
+    .tasknotes-plugin .cancel-button {
+        width: 100%;
+    }
+}
+
+/* =====================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ===================================================================== */
+
+.tasknotes-plugin .action-icon:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 1px var(--interactive-accent);
+	transition: box-shadow 0.15s ease;
+}
+
+.tasknotes-plugin .title-input:focus-visible,
+.tasknotes-plugin .details-input:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 1px;
+}
+
+/* =====================================================================
+   METADATA SECTION - FOR EDIT MODAL
+   ===================================================================== */
+
+.tasknotes-plugin .metadata-container {
+    margin-top: var(--size-4-3);
+    padding-top: var(--size-4-3);
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.tasknotes-plugin .metadata-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-1);
+}
+
+.tasknotes-plugin .metadata-item {
+    display: flex;
+    align-items: center;
+    font-size: var(--font-ui-small);
+}
+
+.tasknotes-plugin .metadata-key {
+    color: var(--text-muted);
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.tasknotes-plugin .metadata-value {
+    color: var(--text-normal);
+    font-family: var(--font-monospace);
+}
+
+/* =====================================================================
+   AUTOCOMPLETE STYLING
+   ===================================================================== */
+
+.tasknotes-plugin .autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-top: none;
+    border-radius: 0 0 var(--radius-s) var(--radius-s);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.tasknotes-plugin .autocomplete-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border-hover);
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    transition: background-color 0.1s ease;
+}
+
+.tasknotes-plugin .autocomplete-suggestion:hover {
+    background: var(--background-modifier-hover);
+}
+
+.tasknotes-plugin .autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+/* =====================================================================
+   NLP INPUT STYLING UPDATES
+   ===================================================================== */
+
+.tasknotes-plugin .nl-input {
+    width: 100%;
+    padding: var(--size-4-3) var(--size-4-2);
+    font-weight: 400;
+    line-height: 1.5;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    resize: vertical;
+    min-height: 80px;
+    transition: all 0.2s ease;
+}
+
+.tasknotes-plugin .nl-input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+    background: var(--background-primary);
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+.tasknotes-plugin .nl-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* =====================================================================
+   COMPLETIONS CALENDAR SECTION
+   ===================================================================== */
+
+.tasknotes-plugin .completions-calendar-container {
+    margin-top: var(--size-4-3);
+    padding-top: var(--size-4-3);
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.tasknotes-plugin .completions-calendar-content {
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+/* =====================================================================
+   DARK MODE ADJUSTMENTS
+   ===================================================================== */
+
+.theme-dark .tasknotes-plugin .minimalist-task-modal .modal-content {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.theme-dark .tasknotes-plugin .action-icon.has-value::after {
+    border-color: var(--background-primary-alt);
+}
+
+.theme-dark .tasknotes-plugin .autocomplete-suggestions {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* NLP Auto-suggestion specific styles */
+.tasknotes-plugin .nlp-suggest-icon {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--interactive-accent);
+    margin-right: var(--size-2-2);
+    min-width: 14px;
+}
+
+.tasknotes-plugin .nlp-suggest-text {
+    color: var(--text-normal);
+}
+
+/* =====================================================================
+   PROJECT SELECTION UI
+   ===================================================================== */
+
+.tasknotes-plugin .task-projects-list {
+    margin-top: var(--size-4-2);
+    border: none;
+    border-radius: var(--radius-s);
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.tasknotes-plugin .task-projects-empty {
+    padding: var(--size-4-3);
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    border: none;
+    font-size: var(--font-ui-small);
+}
+
+.tasknotes-plugin .task-project-item {
+    display: flex;
+    align-items: center;
+    padding: var(--size-4-2);
+    border: none;
+    gap: var(--size-4-2);
+    border-radius: var(--radius-s);
+    transition: background-color 0.2s ease;
+}
+
+.tasknotes-plugin .task-project-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.tasknotes-plugin .task-project-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tasknotes-plugin .task-project-name {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.tasknotes-plugin .task-project-item--unresolved {
+    border: 1px solid var(--color-orange);
+    background: color-mix(in srgb, var(--color-orange) 12%, var(--background-secondary));
+}
+
+.tasknotes-plugin .task-project-item--unresolved .task-project-name {
+    color: var(--color-orange);
+}
+
+/* Make clickable project names in edit modal look and behave like links */
+.tasknotes-plugin .clickable-project .internal-link {
+    color: var(--link-color);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-ui-small);
+    border-radius: var(--radius-xs);
+    padding: 1px 2px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tasknotes-plugin .clickable-project .internal-link:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--link-color-hover);
+    text-decoration: underline;
+}
+
+/* Remove the default + prefix for clickable projects since they're now clearly links */
+.tasknotes-plugin .clickable-project .internal-link::before {
+    content: '+';
+    color: var(--text-muted);
+    margin-right: 2px;
+}
+
+/* Style dependency items the same way when rendered as internal links */
+.tasknotes-plugin .clickable-dependency .task-dependency-link {
+    color: var(--link-color);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-ui-small);
+    border-radius: var(--radius-xs);
+    padding: 1px 2px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tasknotes-plugin .clickable-dependency .task-dependency-link:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--link-color-hover);
+    text-decoration: underline;
+}
+
+.tasknotes-plugin .task-project-path {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Use consistent button system for project remove button */
+.tasknotes-plugin .task-project-remove {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.tasknotes-plugin .task-project-remove:hover {
+    background: var(--tn-color-error);
+    color: var(--tn-bg-primary);
+    border: none;
+    box-shadow: none;
+}
+
+/* =====================================================================
+   PROJECT SELECT MODAL
+   ===================================================================== */
+
+/* Use consistent button system for project suggestions */
+.tasknotes-plugin .project-suggestion {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: var(--size-4-2);
+    border-radius: var(--radius-s);
+}
+
+.tasknotes-plugin .project-suggestion:hover {
+    background: var(--tn-interactive-hover);
+    border: none;
+    box-shadow: none;
+}
+
+.tasknotes-plugin .project-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-normal);
+}
+
+.tasknotes-plugin .project-path {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* =====================================================================
+   DARK MODE ADJUSTMENTS
+   ===================================================================== */
+
+.theme-dark .tasknotes-plugin .minimalist-task-modal .modal-content {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.theme-dark .tasknotes-plugin .action-icon.has-value::after {
+    border-color: var(--background-primary-alt);
+}
+
+.theme-dark .tasknotes-plugin .autocomplete-suggestions {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* NLP Auto-suggestion specific styles */
+.tasknotes-plugin .nlp-suggest-icon {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--interactive-accent);
+    margin-right: var(--size-2-2);
+    min-width: 14px;
+}
+
+.tasknotes-plugin .nlp-suggest-text {
+    color: var(--text-normal);
+}
+
+/* =====================================================================
+   PROJECT SELECTION UI
+   ===================================================================== */
+
+.tasknotes-plugin .task-projects-list {
+    margin-top: var(--size-4-2);
+    border: none;
+    border-radius: var(--radius-s);
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.tasknotes-plugin .task-projects-empty {
+    padding: var(--size-4-3);
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    border: none;
+    font-size: var(--font-ui-small);
+}
+
+.tasknotes-plugin .task-project-item {
+    display: flex;
+    align-items: center;
+    padding: var(--size-4-2);
+    border: none;
+    gap: var(--size-4-2);
+    border-radius: var(--radius-s);
+    transition: background-color 0.2s ease;
+}
+
+.tasknotes-plugin .task-project-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.tasknotes-plugin .task-project-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tasknotes-plugin .task-project-name {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.tasknotes-plugin .task-project-item--unresolved {
+    border: 1px solid var(--color-orange);
+    background: color-mix(in srgb, var(--color-orange) 12%, var(--background-secondary));
+}
+
+.tasknotes-plugin .task-project-item--unresolved .task-project-name {
+    color: var(--color-orange);
+}
+
+/* Make clickable project names in edit modal look and behave like links */
+.tasknotes-plugin .clickable-project .internal-link {
+    color: var(--link-color);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-ui-small);
+    border-radius: var(--radius-xs);
+    padding: 1px 2px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tasknotes-plugin .clickable-project .internal-link:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--link-color-hover);
+    text-decoration: underline;
+}
+
+/* Remove the default + prefix for clickable projects since they're now clearly links */
+.tasknotes-plugin .clickable-project .internal-link::before {
+    content: '+';
+    color: var(--text-muted);
+    margin-right: 2px;
+}
+
+/* Style dependency items the same way when rendered as internal links */
+.tasknotes-plugin .clickable-dependency .task-dependency-link {
+    color: var(--link-color);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-ui-small);
+    border-radius: var(--radius-xs);
+    padding: 1px 2px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tasknotes-plugin .clickable-dependency .task-dependency-link:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--link-color-hover);
+    text-decoration: underline;
+}
+
+.tasknotes-plugin .task-project-path {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Use consistent button system for project remove button */
+.tasknotes-plugin .task-project-remove {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.tasknotes-plugin .task-project-remove:hover {
+    background: var(--tn-color-error);
+    color: var(--tn-bg-primary);
+    border: none;
+    box-shadow: none;
+}
+
+/* =====================================================================
+   PROJECT SELECT MODAL
+   ===================================================================== */
+
+/* Use consistent button system for project suggestions */
+.tasknotes-plugin .project-suggestion {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: var(--size-4-2);
+    border-radius: var(--radius-s);
+}
+
+.tasknotes-plugin .project-suggestion:hover {
+    background: var(--tn-interactive-hover);
+    border: none;
+    box-shadow: none;
+}
+
+.tasknotes-plugin .project-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-normal);
+}
+
+.tasknotes-plugin .project-path {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-top: 2px;
+}
