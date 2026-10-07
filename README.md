@@ -1,5 +1,7 @@
 # DaySprig
 
+[简体中文](README.zh-CN.md)
+
 DaySprig is a standalone desktop task calendar for Obsidian. It provides a focused calendar, task notes, reminders, a daily checklist, and recent files. TaskNotes is not required.
 
 Maintainer: [Felix-Ashford](https://github.com/Felix-Ashford). [Report issues](https://github.com/Felix-Ashford/DaySprig/issues).
