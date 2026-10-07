@@ -215,7 +215,7 @@ export class HTTPAPIService implements IWebhookNotifier {
 					});
 				});
 
-				this.server.listen(this.plugin.settings.apiPort, () => {
+				this.server.listen(this.plugin.settings.apiPort, "127.0.0.1", () => {
 					console.log(
 						`TaskNotes API server started on port ${this.plugin.settings.apiPort}`
 					);

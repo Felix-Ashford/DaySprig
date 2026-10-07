@@ -27,6 +27,15 @@ export class PriorityManager {
 		return [...this.priorities].sort((a, b) => a.weight - b.weight);
 	}
 
+	/** Move one level by weight without wrapping past either end. */
+	getAdjacentPriority(currentPriority: string, delta: number): string {
+		const priorities = this.getPrioritiesByWeightAsc();
+		if (priorities.length === 0) return currentPriority;
+		const index = priorities.findIndex((priority) => priority.value === currentPriority);
+		const nextIndex = Math.max(0, Math.min(priorities.length - 1, (index < 0 ? 0 : index) + Math.sign(delta)));
+		return priorities[nextIndex].value;
+	}
+
 	/**
 	 * Get next priority in cycle (cycling by weight order)
 	 */

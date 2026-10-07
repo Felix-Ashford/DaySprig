@@ -10,11 +10,13 @@ import { splitListPreservingLinksAndQuotes } from "../utils/stringSplit";
 export interface TaskCreationOptions {
 	prePopulatedValues?: Partial<TaskInfo>;
 	onTaskCreated?: (task: TaskInfo) => void;
+	onClosed?: (saved: boolean) => void;
 }
 
 export class TaskCreationModal extends TaskModal {
 	private options: TaskCreationOptions;
 	private nlInput!: HTMLTextAreaElement;
+	private saved = false;
 
 	constructor(app: App, plugin: TaskNotesPlugin, options: TaskCreationOptions = {}) {
 		super(app, plugin);
@@ -65,12 +67,16 @@ export class TaskCreationModal extends TaskModal {
 
 		// Save the plain text title and details from the same text area.
 		this.nlInput.addEventListener("keydown", (e) => {
-			if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-				e.preventDefault();
-				this.handleSave();
+			if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return;
+			e.preventDefault();
+			e.stopPropagation();
+			if (e.ctrlKey || e.metaKey) {
+				this.nlInput.setRangeText("\n", this.nlInput.selectionStart, this.nlInput.selectionEnd, "end");
+				this.nlInput.dispatchEvent(new Event("input", { bubbles: true }));
+			} else if (!e.repeat) {
+				this.contentEl.querySelector<HTMLButtonElement>(".save-button")?.click();
 			}
 		});
-
 		// Focus the input
 		setTimeout(() => {
 			this.nlInput.focus();
@@ -160,6 +166,7 @@ export class TaskCreationModal extends TaskModal {
 			const taskData = this.buildTaskData();
 			const result = await this.plugin.taskService.createTask(taskData);
 			const createdTask = result.taskInfo;
+			this.saved = true;
 
 			// Check if filename was changed due to length constraints
 			const expectedFilename = result.taskInfo.title.replace(/[<>:"/\\|?*]/g, "").trim();
@@ -187,6 +194,11 @@ export class TaskCreationModal extends TaskModal {
 			const message = error instanceof Error && error.message ? error.message : String(error);
 			new Notice(this.t("modals.taskCreation.notices.failure", { message }));
 		}
+	}
+
+	onClose(): void {
+		this.contentEl.empty();
+		this.options.onClosed?.(this.saved);
 	}
 
 	private buildTaskData(): Partial<TaskInfo> {

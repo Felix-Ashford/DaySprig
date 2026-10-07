@@ -1618,6 +1618,11 @@ export const zh: TranslationTree = {
 			tagsPlaceholder: "标签1，标签2",
 			timeEstimateLabel: "时间估计（分钟）",
 			timeEstimatePlaceholder: "30",
+			priority: {
+				label: "重要度",
+				increase: "提升重要度",
+				decrease: "降低重要度",
+			},
 			customFieldsLabel: "自定义字段",
 			actions: {
 				due: "设置到期日期",

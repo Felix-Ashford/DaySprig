@@ -10,6 +10,7 @@ import TaskNotesPlugin from "../main";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Get, Post, Put, Delete } from "../utils/OpenAPIDecorators";
 import { calculateDefaultDate } from "../utils/helpers";
+import { getDatePart, getTodayString } from "../utils/dateUtils";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface TaskQueryParams {
@@ -354,7 +355,16 @@ export class TasksController extends BaseController {
 				return;
 			}
 
-			const instanceDate = date ? new Date(date) : undefined;
+			let instanceDate: Date | undefined;
+			if (date) {
+				if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(date)) {
+					this.sendResponse(res, 400, this.errorResponse("Invalid recurrence date"));
+					return;
+				}
+				const datePart = getDatePart(date);
+				const [year, month, day] = datePart.split("-").map(Number);
+				instanceDate = new Date(Date.UTC(year, month - 1, day));
+			}
 			const updatedTask = await this.taskService.toggleRecurringTaskComplete(
 				task,
 				instanceDate
@@ -432,7 +442,8 @@ export class TasksController extends BaseController {
 				).length,
 				overdue: allTasks.filter((t) => {
 					if (this.statusManager.isCompletedStatus(t.status) || t.archived) return false;
-					return t.due && new Date(t.due) < new Date();
+					const dueDay = t.due ? getDatePart(t.due) : "";
+					return !!dueDay && dueDay < getTodayString();
 				}).length,
 				archived: allTasks.filter((t) => t.archived).length,
 				withTimeTracking: allTasks.filter((t) => t.timeEntries && t.timeEntries.length > 0)

@@ -95,11 +95,6 @@ export class AutoExportService {
 			// Get all tasks
 			const allTasks = await this.plugin.cacheManager.getAllTasks();
 
-			if (allTasks.length === 0) {
-				console.log("TaskNotes: Auto export skipped - no tasks found");
-				return;
-			}
-
 			// Generate ICS content
 			const icsContent = CalendarExportService.generateMultipleTasksICSContent(allTasks);
 

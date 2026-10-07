@@ -24,9 +24,14 @@ export class NotificationService {
 	private readonly BROAD_SCAN_INTERVAL = 5 * 60 * 1000; // 5 minutes
 	private readonly QUICK_CHECK_INTERVAL = 30 * 1000; // 30 seconds
 	private readonly QUEUE_WINDOW = 5 * 60 * 1000; // 5 minutes ahead
+	private readonly MISSED_REMINDER_WINDOW = 24 * 60 * 60 * 1000;
 
 	constructor(plugin: TaskNotesPlugin) {
 		this.plugin = plugin;
+	}
+
+	private reminderKey(taskPath: string, reminderId: string): string {
+		return `${taskPath}\u0000${reminderId}`;
 	}
 
 	async initialize(): Promise<void> {
@@ -120,7 +125,7 @@ export class NotificationService {
 
 			for (const reminder of task.reminders) {
 				// Skip if already processed
-				const reminderId = `${task.path}-${reminder.id}`;
+				const reminderId = this.reminderKey(task.path, reminder.id);
 				if (this.processedReminders.has(reminderId)) {
 					continue;
 				}
@@ -130,8 +135,11 @@ export class NotificationService {
 					continue;
 				}
 
-				// Add to queue if within the next scan window
-				if (notifyAt > now && notifyAt <= windowEnd) {
+				// Queue upcoming reminders and reminders missed while Obsidian was closed.
+				if (
+					(notifyAt > now && notifyAt <= windowEnd) ||
+					(notifyAt <= now && notifyAt >= now - this.MISSED_REMINDER_WINDOW)
+				) {
 					this.notificationQueue.push({
 						taskPath: task.path,
 						reminder,
@@ -223,7 +231,7 @@ export class NotificationService {
 				toRemove.push(i);
 
 				// Mark as processed to avoid duplicates
-				const reminderId = `${item.taskPath}-${item.reminder.id}`;
+				const reminderId = this.reminderKey(item.taskPath, item.reminder.id);
 				this.processedReminders.add(reminderId);
 			} else {
 				// Queue is sorted, so we can break early
@@ -355,7 +363,7 @@ export class NotificationService {
 	clearProcessedRemindersForTask(taskPath: string): void {
 		const keysToRemove: string[] = [];
 		for (const key of this.processedReminders) {
-			if (key.startsWith(`${taskPath}-`)) {
+			if (key.startsWith(`${taskPath}\u0000`)) {
 				keysToRemove.push(key);
 			}
 		}
@@ -382,7 +390,7 @@ export class NotificationService {
 
 				if (updatedTask.reminders && updatedTask.reminders.length > 0) {
 					for (const reminder of updatedTask.reminders) {
-						const reminderId = `${path}-${reminder.id}`;
+						const reminderId = this.reminderKey(path, reminder.id);
 						if (this.processedReminders.has(reminderId)) {
 							continue;
 						}
@@ -393,7 +401,10 @@ export class NotificationService {
 						}
 
 						// Add to queue if within the next scan window
-						if (notifyAt > now && notifyAt <= windowEnd) {
+						if (
+							(notifyAt > now && notifyAt <= windowEnd) ||
+							(notifyAt <= now && notifyAt >= now - this.MISSED_REMINDER_WINDOW)
+						) {
 							this.notificationQueue.push({
 								taskPath: path,
 								reminder,
@@ -423,7 +434,13 @@ export class NotificationService {
 
 		// Check all processed reminders and remove ones that should have triggered
 		for (const key of this.processedReminders) {
-			const [taskPath, reminderId] = key.split("-", 2);
+			const separator = key.indexOf("\u0000");
+			// Accept keys written by older versions as a best-effort fallback.
+			const legacySeparator = separator < 0 ? key.lastIndexOf("-") : -1;
+			const splitAt = separator >= 0 ? separator : legacySeparator;
+			if (splitAt <= 0) continue;
+			const taskPath = key.slice(0, splitAt);
+			const reminderId = key.slice(splitAt + 1);
 			if (!taskPath || !reminderId) continue;
 
 			// Try to get the task and check if the reminder time has passed

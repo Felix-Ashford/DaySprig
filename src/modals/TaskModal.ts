@@ -45,7 +45,14 @@ export abstract class TaskModal extends Modal {
 		setIcon(icon, "daysprig-simple");
 		this.titleEl.insertBefore(icon, this.titleEl.firstChild);
 		void this.initializeFormData().then(() => {
+			this.createPriorityIndicator(this.titleEl);
 			this.createModalContent();
+			this.contentEl.onkeydown = (event) => {
+				if (this.handlePriorityKeydown(event)) {
+					event.preventDefault();
+					event.stopPropagation();
+				}
+			};
 			this.focusTitleInput();
 		});
 	}
@@ -62,6 +69,41 @@ export abstract class TaskModal extends Modal {
 
 	protected focusTitleInput(): void {
 		setTimeout(() => this.titleInput?.focus(), 100);
+	}
+
+	protected createPriorityIndicator(container: HTMLElement): void {
+		const indicator = container.createSpan("task-priority-indicator");
+		indicator.setAttribute("role", "status");
+		indicator.setAttribute("aria-live", "polite");
+		const update = () => {
+			const config = this.plugin.priorityManager.getPriorityConfig(this.priority);
+			const label = config?.label || this.priority;
+			indicator.style.setProperty("--priority-color", config?.color || "var(--interactive-accent)");
+			const description = this.t("modals.task.priority.label") + ": " + label;
+			indicator.setAttribute("aria-label", description);
+		};
+		const change = (delta: number) => {
+			const nextValue = this.plugin.priorityManager.getAdjacentPriority(this.priority, delta);
+			const next = this.plugin.priorityManager.getPriorityConfig(nextValue);
+			if (next) { this.priority = next.value; update(); }
+		};
+		update();
+		this.priorityControl = { change };
+	}
+
+	private priorityControl?: { change: (delta: number) => void };
+
+	protected handlePriorityKeydown(event: KeyboardEvent): boolean {
+		if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return false;
+		if (event.key === "ArrowUp") {
+			this.priorityControl?.change(1);
+			return true;
+		}
+		if (event.key === "ArrowDown") {
+			this.priorityControl?.change(-1);
+			return true;
+		}
+		return false;
 	}
 
 	protected createActionButtons(container: HTMLElement): void {

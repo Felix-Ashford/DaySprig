@@ -365,32 +365,27 @@ export class TaskService {
 				details: normalizedBody,
 			};
 
-			// Wait for fresh data and update cache
-			try {
-				// Wait for the metadata cache to have the updated data for new tasks
-				if (this.plugin.cacheManager.waitForFreshTaskData) {
-					await this.plugin.cacheManager.waitForFreshTaskData(file, {
-						title: taskInfo.title,
-					});
-				}
-				this.plugin.cacheManager.updateTaskInfoInCache(file.path, taskInfo);
-			} catch (cacheError) {
-				console.error("Error updating cache for new task:", cacheError);
-			}
+			// Update the local cache immediately. Metadata refresh is allowed to finish in the background
+		// so closing the creation modal is not delayed by Obsidian's metadata queue.
+		this.plugin.cacheManager.updateTaskInfoInCache(file.path, taskInfo);
+		if (this.plugin.cacheManager.waitForFreshTaskData) {
+			void this.plugin.cacheManager
+				.waitForFreshTaskData(file, { title: taskInfo.title })
+				.catch((cacheError) => console.error("Error refreshing cache for new task:", cacheError));
+		}
 
-			// Emit task created event
-			this.plugin.emitter.trigger(EVENT_TASK_UPDATED, {
+			// Refresh listeners after the modal can close, keeping task creation responsive.
+			const taskUpdatedEvent = {
 				path: file.path,
 				updatedTask: taskInfo,
-			});
+			};
+			setTimeout(() => this.plugin.emitter.trigger(EVENT_TASK_UPDATED, taskUpdatedEvent), 0);
 
-			// Trigger webhook for task creation
+			// Trigger webhooks in the background so they cannot block the modal close.
 			if (this.webhookNotifier) {
-				try {
-					await this.webhookNotifier.triggerWebhook("task.created", { task: taskInfo });
-				} catch (error) {
-					console.warn("Failed to trigger webhook for task creation:", error);
-				}
+				void this.webhookNotifier
+					.triggerWebhook("task.created", { task: taskInfo })
+					.catch((error) => console.warn("Failed to trigger webhook for task creation:", error));
 			}
 
 			return { file, taskInfo };
@@ -1637,9 +1632,13 @@ export class TaskService {
 		);
 		if (nextDates.scheduled) {
 			updatedTask.scheduled = nextDates.scheduled;
+		} else {
+			updatedTask.scheduled = undefined;
 		}
 		if (nextDates.due) {
 			updatedTask.due = nextDates.due;
+		} else {
+			updatedTask.due = undefined;
 		}
 
 		// Step 2: Persist to file
@@ -1675,11 +1674,15 @@ export class TaskService {
 			// Update scheduled date if it changed
 			if (updatedTask.scheduled) {
 				frontmatter[scheduledField] = updatedTask.scheduled;
+			} else {
+				delete frontmatter[scheduledField];
 			}
 
 			// Update due date if it changed
 			if (updatedTask.due) {
 				frontmatter[dueField] = updatedTask.due;
+			} else {
+				delete frontmatter[dueField];
 			}
 
 			frontmatter[dateModifiedField] = updatedTask.dateModified;

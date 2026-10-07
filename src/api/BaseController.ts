@@ -8,6 +8,7 @@ export interface APIResponse<T = any> {
 }
 
 export abstract class BaseController {
+	private static readonly MAX_BODY_BYTES = 1024 * 1024;
 	protected sendResponse(res: ServerResponse, statusCode: number, data: any): void {
 		res.statusCode = statusCode;
 		res.setHeader("Content-Type", "application/json");
@@ -28,10 +29,21 @@ export abstract class BaseController {
 	protected async parseRequestBody(req: IncomingMessage): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let body = "";
+			let size = 0;
+			let tooLarge = false;
 			req.on("data", (chunk) => {
+				size += Buffer.byteLength(chunk);
+				if (size > BaseController.MAX_BODY_BYTES) {
+					tooLarge = true;
+					return;
+				}
 				body += chunk.toString();
 			});
 			req.on("end", () => {
+				if (tooLarge) {
+					reject(new Error("Request body too large"));
+					return;
+				}
 				try {
 					resolve(body ? JSON.parse(body) : {});
 				} catch (error) {

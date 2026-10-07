@@ -83,6 +83,24 @@
     padding: var(--size-4-4);
 }
 
+.tasknotes-plugin .modal-title {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
+}
+
+.tasknotes-plugin .task-priority-indicator {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 11px;
+    height: 11px;
+    margin-left: 0;
+    border: 2px solid var(--background-primary);
+    border-radius: 50%;
+    background: var(--priority-color, var(--interactive-accent));
+    box-shadow: 0 0 0 1px var(--background-modifier-border), 0 0 8px color-mix(in srgb, var(--priority-color, var(--interactive-accent)) 55%, transparent);
+}
+
 /* =====================================================================
    TITLE INPUT - PRIMARY FOCUS
    ===================================================================== */

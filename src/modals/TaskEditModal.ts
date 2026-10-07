@@ -38,6 +38,7 @@ export class TaskEditModal extends TaskModal {
 
 	async initializeFormData(): Promise<void> {
 		this.title = this.task.title;
+		this.priority = this.task.priority || this.plugin.settings.defaultTaskPriority;
 		this.details = this.normalizeDetails(this.task.details || this.details);
 		this.originalDetails = this.details;
 	}
@@ -103,6 +104,17 @@ export class TaskEditModal extends TaskModal {
 			this.title = (lines.shift() || "").trim();
 			this.details = lines.join("\n").trimEnd();
 		});
+		textInput.addEventListener("keydown", (e) => {
+			if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return;
+			e.preventDefault();
+			e.stopPropagation();
+			if (e.ctrlKey || e.metaKey) {
+				textInput.setRangeText("\n", textInput.selectionStart, textInput.selectionEnd, "end");
+				textInput.dispatchEvent(new Event("input", { bubbles: true }));
+			} else if (!e.repeat) {
+				this.contentEl.querySelector<HTMLButtonElement>(".save-button")?.click();
+			}
+		});
 		this.titleInput = textInput as unknown as HTMLInputElement;
 		setTimeout(() => textInput.focus(), 100);
 
@@ -158,6 +170,9 @@ export class TaskEditModal extends TaskModal {
 		const normalizedOriginal = this.normalizeDetails(this.originalDetails);
 		if (normalizedDetails !== normalizedOriginal) {
 			changes.details = normalizedDetails;
+		}
+		if (this.priority !== (this.task.priority || this.plugin.settings.defaultTaskPriority)) {
+			changes.priority = this.priority;
 		}
 
 		// Always update modified timestamp if there are changes

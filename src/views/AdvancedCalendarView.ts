@@ -143,6 +143,9 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 
 	// Mobile collapsible header state
 	private headerCollapsed = true;
+	private lastTaskCreationSelection?: { start: Date; end: Date; allDay: boolean };
+	private suppressTaskCreationKeyupUntil = 0;
+	private taskCreationShortcutCleanup?: () => void;
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskNotesPlugin) {
 		super(leaf);
@@ -1177,6 +1180,7 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 	}
 
 	private handleTaskCreation(start: Date, end: Date, allDay: boolean) {
+		this.lastTaskCreationSelection = undefined;
 		// Convert slot duration setting to minutes for comparison
 		const slotDurationSetting = this.plugin.settings.calendarViewSettings.slotDuration;
 		const slotDurationMinutes = this.parseSlotDurationToMinutes(slotDurationSetting);
@@ -1192,6 +1196,19 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 
 		const modal = new TaskCreationModal(this.app, this.plugin, {
 			prePopulatedValues,
+			onTaskCreated: () => {
+				this.lastTaskCreationSelection = { start: new Date(start), end: new Date(end), allDay };
+				this.suppressTaskCreationKeyupUntil = Date.now() + 300;
+			},
+			onClosed: (saved) => {
+				if (!saved) return;
+				// Restore focus after Obsidian finishes closing the modal.
+				setTimeout(() => {
+					if (!this.contentEl.isConnected || this.leaf.view !== this) return;
+					this.contentEl.tabIndex = -1;
+					this.contentEl.focus({ preventScroll: true });
+				}, 0);
+			},
 		});
 
 		modal.open();
@@ -1786,6 +1803,35 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		// Clean up function listeners (FilterService, ICS subscription service, etc.)
 		this.functionListeners.forEach((unsubscribe) => unsubscribe());
 		this.functionListeners = [];
+		this.taskCreationShortcutCleanup?.();
+		const continueCreation = (event: KeyboardEvent) => {
+			const selection = this.lastTaskCreationSelection;
+			if (!selection || event.key !== "Enter" || event.isComposing || event.keyCode === 229 || event.repeat) return;
+			if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+			event.preventDefault();
+			event.stopPropagation();
+			this.handleTaskCreation(new Date(selection.start), new Date(selection.end), selection.allDay);
+		};
+		const continueCreationOnKeyUp = (event: KeyboardEvent) => {
+			if (event.key !== "Enter" || event.isComposing || event.repeat) return;
+			if (Date.now() < this.suppressTaskCreationKeyupUntil) {
+				return;
+			}
+			if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+			if (this.lastTaskCreationSelection) continueCreation(event);
+		};
+		const ownerDocument = this.contentEl.ownerDocument;
+		const ownerWindow = ownerDocument.defaultView;
+		ownerWindow?.addEventListener("keydown", continueCreation, true);
+		ownerDocument.addEventListener("keydown", continueCreation, true);
+		ownerWindow?.addEventListener("keyup", continueCreationOnKeyUp, true);
+		ownerDocument.addEventListener("keyup", continueCreationOnKeyUp, true);
+		this.taskCreationShortcutCleanup = () => {
+			ownerWindow?.removeEventListener("keydown", continueCreation, true);
+			ownerDocument.removeEventListener("keydown", continueCreation, true);
+			ownerWindow?.removeEventListener("keyup", continueCreationOnKeyUp, true);
+			ownerDocument.removeEventListener("keyup", continueCreationOnKeyUp, true);
+		};
 
 		// Listen for data changes
 		const dataListener = this.plugin.emitter.on(EVENT_DATA_CHANGED, async () => {
@@ -2424,6 +2470,10 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 	// Old performance methods removed - now using centralized ViewPerformanceService
 
 	async onClose() {
+		this.taskCreationShortcutCleanup?.();
+		this.taskCreationShortcutCleanup = undefined;
+		this.lastTaskCreationSelection = undefined;
+
 		// Clean up resize handling
 		if (this.resizeObserver) {
 			this.resizeObserver.disconnect();

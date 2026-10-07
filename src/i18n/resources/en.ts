@@ -1715,6 +1715,11 @@ export const en: TranslationTree = {
 				},
 			},
 			customFieldsLabel: "Custom Fields",
+			priority: {
+				label: "Priority",
+				increase: "Increase priority",
+				decrease: "Decrease priority",
+			},
 			actions: {
 				due: "Set due date",
 				scheduled: "Set scheduled date",

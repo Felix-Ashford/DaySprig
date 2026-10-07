@@ -943,6 +943,13 @@ function addDaysStr(days) {
 	return fmtDate(d);
 }
 
+// TaskService stores recurring completion dates as UTC-anchored calendar days.
+// Pass an explicit UTC anchor so local time zones cannot shift the saved day.
+function todayAsUTCAnchor() {
+	const now = new Date();
+	return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
 // 提醒日 = 计划日期优先，无则截止日期；取 yyyy-MM-dd 部分
 function reminderDayOf(task) {
 	const raw = task?.scheduled || task?.due || "";
@@ -1268,7 +1275,7 @@ async function completeByButton(tweaks, task) {
 	const tn = tweaks.tn;
 	try {
 		if (task.recurrence) {
-			await tn.toggleRecurringTaskComplete(task, new Date());
+			await tn.toggleRecurringTaskComplete(task, todayAsUTCAnchor());
 			new Notice(`已完成今日实例：『${task.title}』`);
 			return true;
 		}
