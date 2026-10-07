@@ -140,6 +140,7 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 	private headerCollapsed = true;
 	private lastTaskCreationSelection?: { start: Date; end: Date; allDay: boolean };
 	private suppressTaskCreationKeyupUntil = 0;
+	private taskCreationEnterStartedInModal = false;
 	private taskCreationShortcutCleanup?: () => void;
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskNotesPlugin) {
@@ -1694,9 +1695,17 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		this.functionListeners.forEach((unsubscribe) => unsubscribe());
 		this.functionListeners = [];
 		this.taskCreationShortcutCleanup?.();
+		const handledEnterKeyups = new WeakSet<KeyboardEvent>();
 		const continueCreation = (event: KeyboardEvent) => {
 			const selection = this.lastTaskCreationSelection;
 			if (!selection || event.key !== "Enter" || event.isComposing || event.keyCode === 229 || event.repeat) return;
+			// Modals handle Enter themselves (save in the edit dialog, insert newline in other fields).
+			if ((event.target as Element | null)?.closest?.(".modal") ||
+				this.contentEl.ownerDocument.querySelector(".modal-container")) {
+				if (event.type === "keydown") this.taskCreationEnterStartedInModal = true;
+				return;
+			}
+			if (event.type === "keydown") this.taskCreationEnterStartedInModal = false;
 			if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
 			event.preventDefault();
 			event.stopPropagation();
@@ -1704,6 +1713,13 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		};
 		const continueCreationOnKeyUp = (event: KeyboardEvent) => {
 			if (event.key !== "Enter" || event.isComposing || event.repeat) return;
+			// Window and document may see the same event; consume the modal marker only once.
+			if (handledEnterKeyups.has(event)) return;
+			handledEnterKeyups.add(event);
+			if (this.taskCreationEnterStartedInModal) {
+				this.taskCreationEnterStartedInModal = false;
+				return;
+			}
 			if (Date.now() < this.suppressTaskCreationKeyupUntil) {
 				return;
 			}

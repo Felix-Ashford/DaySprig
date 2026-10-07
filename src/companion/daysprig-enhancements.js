@@ -43,6 +43,10 @@ const TASK_EVENT_TYPES = new Set(["scheduled", "due", "recurring", "timeEntry"])
 const HIGH = "high";
 const DAY_CHECK_MS = 60_000;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+function getUiText(host, key, params) {
+	const translated = host?.i18n?.translate?.(`companion.${key}`, params);
+	return translated || key;
+}
 
 module.exports = class DaySprigEnhancements extends Component {
 	constructor(host) {
@@ -99,16 +103,16 @@ module.exports = class DaySprigEnhancements extends Component {
 		// 今日任务清单（Ctrl+Shift+T，可在设置→快捷键中修改）
 		this.addCommand({
 			id: "open-today-task-list",
-			name: "打开今日任务清单",
+			name: getUiText(this.host, "openTodayCommand"),
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "D" }],
 			callback: () => {
 				if (!this.tn) {
-					new Notice("DaySprig 尚未初始化");
+					new Notice(getUiText(this.host, "notReady"));
 					return;
 				}
 				if (!this._daily || !this._rs) {
 					// 初始化是异步的：状态未就绪时清单会渲染不出每日任务栏
-					new Notice("DaySprig 正在初始化，请稍候再试");
+					new Notice(getUiText(this.host, "initializing"));
 					return;
 				}
 				// toggle：已打开则关闭
@@ -124,7 +128,7 @@ module.exports = class DaySprigEnhancements extends Component {
 		// 最近文件列表（Ctrl+Shift+Q，可在设置→快捷键中修改）
 		this.addCommand({
 			id: "open-recent-files",
-			name: "打开最近文件列表",
+			name: getUiText(this.host, "openRecentCommand"),
 			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "q" }],
 			callback: () => {
 				// toggle：已打开则关闭
@@ -136,9 +140,36 @@ module.exports = class DaySprigEnhancements extends Component {
 				this._recentModal.open();
 			},
 		});
+		this._localeRef = this.host.i18n?.on?.("locale-changed", () => {
+			const commandApi = this.app.commands;
+			const todayCommand = commandApi?.commands?.[`${this.host.manifest.id}:open-today-task-list`];
+			const recentCommand = commandApi?.commands?.[`${this.host.manifest.id}:open-recent-files`];
+			if (todayCommand) todayCommand.name = getUiText(this.host, "openTodayCommand");
+			if (recentCommand) recentCommand.name = getUiText(this.host, "openRecentCommand");
+			this.refreshLocalizedViews();
+		});
+	}
+
+	refreshLocalizedViews() {
+		if (this._todayModal) {
+			const modal = this._todayModal;
+			const value = modal.contentEl.querySelector(".tnct-daily-inputrow input")?.value || "";
+			void modal.render().then(() => {
+				const input = modal.contentEl.querySelector(".tnct-daily-inputrow input");
+				if (input) input.value = value;
+			});
+		}
+		if (this._recentModal) {
+			const modal = this._recentModal;
+			const query = modal._favInput?.value || "";
+			modal.render();
+			if (modal._favInput) modal._favInput.value = query;
+			modal.renderSuggest(query);
+		}
 	}
 
 	onunload() {
+		this.host.i18n?.offref?.(this._localeRef);
 		try {
 			this._recentModal?.close();
 		} catch (e) {
@@ -1260,12 +1291,12 @@ async function postponeTask(tweaks, task, days, includeToday) {
 		}
 		if (changed)
 			new Notice(
-				`已推迟到${days === 1 ? "明天" : days === 7 ? "一周后" : `${days} 天后`}：『${task.title}』`
+				getUiText(tweaks.host, "postponed", { when: getUiText(tweaks.host, days === 1 ? "tomorrowLabel" : days === 7 ? "week" : "daysLater", { days }), title: task.title })
 			);
 		return changed > 0;
 	} catch (e) {
 		console.error("[TN Calendar Tweaks] postpone failed:", e);
-		new Notice("推迟任务失败");
+		new Notice(getUiText(tweaks.host, "postponeFailed"));
 		return false;
 	}
 }
@@ -1276,20 +1307,20 @@ async function completeByButton(tweaks, task) {
 	try {
 		if (task.recurrence) {
 			await tn.toggleRecurringTaskComplete(task, todayAsUTCAnchor());
-			new Notice(`已完成今日实例：『${task.title}』`);
+			new Notice(getUiText(tweaks.host, "completedInstance", { title: task.title }));
 			return true;
 		}
 		const target = tn.statusManager.getCompletedStatuses()[0] || null;
 		if (!target) {
-			new Notice("未配置完成状态，无法标记完成");
+			new Notice(getUiText(tweaks.host, "noCompletedStatus"));
 			return false;
 		}
 		await tn.updateTaskProperty(task, "status", target, { silent: true });
-		new Notice(`已完成：『${task.title}』`);
+		new Notice(getUiText(tweaks.host, "completedTask", { title: task.title }));
 		return true;
 	} catch (e) {
 		console.error("[TN Calendar Tweaks] complete failed:", e);
-		new Notice("标记完成失败");
+		new Notice(getUiText(tweaks.host, "completeFailed"));
 		return false;
 	}
 }
@@ -1313,20 +1344,20 @@ function mountDaysInput(container, onOk, onCancel, owner) {
 	input.type = "number";
 	input.min = "1";
 	input.max = "365";
-	input.placeholder = "天数";
+	input.placeholder = owner?.t ? owner.t("daysPlaceholder") : "天数";
 	const ok = document.createElement("button");
 	ok.textContent = "✓";
-	ok.title = "确定";
+	ok.title = owner?.t ? owner.t("confirm") : "确定";
 	const cancel = document.createElement("button");
 	cancel.textContent = "✕";
-	cancel.title = "取消";
+	cancel.title = owner?.t ? owner.t("cancel") : "取消";
 	const submit = () => {
 		const n = Math.floor(Number(input.value));
 		if (n >= 1 && n <= 365) {
 			cleanupFlags();
 			onOk(n);
 		} else {
-			new Notice("请输入 1-365 的整数天数");
+			new Notice(owner?.t ? owner.t("invalidDays") : "请输入 1-365 的整数天数");
 		}
 	};
 	const doCancel = () => {
@@ -1537,8 +1568,10 @@ class TodayListModal extends Modal {
 	constructor(app, tweaks) {
 		super(app);
 		this.tweaks = tweaks;
-		this.tn = tweaks.tn;
+						this.tn = tweaks.tn;
 	}
+
+	t(key, params) { return getUiText(this.tweaks?.host || this.tweaks, key, params); }
 
 	async onOpen() {
 		await this.render();
@@ -1572,12 +1605,12 @@ class TodayListModal extends Modal {
 
 		const wrap = container.createDiv({ cls: "tnct-daily" });
 		const header = wrap.createDiv({ cls: "tnct-today-header" });
-		header.createSpan({ text: "每日任务" });
+		header.createSpan({ text: this.t("daily") });
 		header.createSpan({
 			cls: "tnct-daily-count",
-			text: state.items.length ? `　今日已完成 ${doneCount}/${state.items.length}` : "",
+			text: state.items.length ? this.t("dailyDone", { done: doneCount, total: state.items.length }) : "",
 		});
-		const allBtn = header.createEl("button", { cls: "tnct-daily-all", text: "全部完成" });
+		const allBtn = header.createEl("button", { cls: "tnct-daily-all", text: this.t("completeAll") });
 		allBtn.disabled = pending.length === 0;
 		allBtn.addEventListener("click", async () => {
 			if (completeAllDaily(state, today)) await tweaks.persistState();
@@ -1586,8 +1619,8 @@ class TodayListModal extends Modal {
 
 		// 内联新建
 		const inputRow = wrap.createDiv({ cls: "tnct-daily-inputrow" });
-		const input = inputRow.createEl("input", { type: "text", placeholder: "输入标题，回车新建每日任务" });
-		const addBtn = inputRow.createEl("button", { text: "添加" });
+		const input = inputRow.createEl("input", { type: "text", placeholder: this.t("addDailyPlaceholder") });
+		const addBtn = inputRow.createEl("button", { text: this.t("add") });
 		addBtn.addEventListener("click", () => this.submitDaily(input));
 		input.addEventListener("keydown", (ev) => {
 			if (ev.key === "Enter") {
@@ -1603,17 +1636,17 @@ class TodayListModal extends Modal {
 			const titleLine = main.createDiv({ cls: "tnct-today-title" });
 			const dot = titleLine.createSpan({ cls: "tnct-float-dot" });
 			dot.style.background = "var(--color-accent)";
-			dot.title = "每日任务";
+			dot.title = this.t("daily");
 			titleLine.createSpan({ text: it.title });
 			const actions = row.createDiv({ cls: "tnct-today-actions" });
-			const doneBtn = actions.createEl("button", { text: "完成", title: "今日完成（明天恢复展示）" });
+			const doneBtn = actions.createEl("button", { text: this.t("complete"), title: this.t("completeDailyTitle") });
 			doneBtn.addEventListener("click", async () => {
 				if (completeDailyToday(state, it.id, today)) await tweaks.persistState();
 				await this.render();
 			});
 			const confirming = this._confirmDeleteId === it.id;
-			const delBtn = actions.createEl("button", { text: confirming ? "确认删除？" : "删除", cls: confirming ? "mod-warning" : "" });
-			delBtn.title = confirming ? "再次点击永久删除" : "永久删除此每日任务";
+			const delBtn = actions.createEl("button", { text: confirming ? this.t("confirmDelete") : this.t("delete"), cls: confirming ? "mod-warning" : "" });
+			delBtn.title = confirming ? this.t("deleteAgain") : this.t("deleteDailyTitle");
 			delBtn.addEventListener("click", async () => {
 				if (this._confirmDeleteId === it.id) {
 					this._confirmDeleteId = null;
@@ -1624,7 +1657,7 @@ class TodayListModal extends Modal {
 				await this.render();
 			});
 		}
-		if (!state.items.length) wrap.createDiv({ cls: "tnct-daily-empty", text: "还没有每日任务，用上方输入框创建" });
+		if (!state.items.length) wrap.createDiv({ cls: "tnct-daily-empty", text: this.t("emptyDaily") });
 	}
 
 	async submitDaily(input) {
@@ -1651,7 +1684,7 @@ class TodayListModal extends Modal {
 		const el = this.contentEl;
 		el.empty();
 		el.addClass("tnct-today");
-		el.createEl("h3", { text: "今日任务清单" });
+		el.createEl("h3", { text: this.t("todayTitle") });
 		this.renderDailySection(el);
 		const seq = (this._renderSeq = (this._renderSeq || 0) + 1);
 		let tasks = [];
@@ -1665,31 +1698,31 @@ class TodayListModal extends Modal {
 		const totalOpen = groups.overdue.length + groups.todaySched.length + groups.todayDue.length;
 		const hasDaily = this.tweaks._daily.items.length > 0;
 		if (!totalOpen && !groups.completedToday.length && !hasDaily) {
-			el.createEl("p", { cls: "tnct-today-empty", text: "今天没有需要完成的任务" });
+			el.createEl("p", { cls: "tnct-today-empty", text: this.t("emptyToday") });
 			return;
 		}
 		const section = (title, list, metaOf, cls) => {
 			if (!list.length) return;
 			const div = el.createDiv({ cls: "tnct-today-section" });
-			div.createEl("div", { cls: `tnct-today-header ${cls || ""}`, text: `${title}（${list.length}）` });
+			div.createEl("div", { cls: `tnct-today-header ${cls || ""}`, text: this.t("sectionCount", { title, count: list.length }) });
 			for (const t of list) div.appendChild(this.renderRow(t, metaOf(t)));
 		};
-		section("过期未完成", groups.overdue, (t) => `原定 ${dayOf(t.scheduled) || dayOf(t.due)}`, "tnct-today-overdue");
+		section(this.t("overdue"), groups.overdue, (t) => `${this.t("original")} ${dayOf(t.scheduled) || dayOf(t.due)}`, "tnct-today-overdue");
 		section(
-			"计划于今日",
+			this.t("planned"),
 			groups.todaySched,
-			(t) => (t.scheduled && t.scheduled.includes("T") ? `今天 ${t.scheduled.split("T")[1]}` : "今天"),
+			(t) => (t.scheduled && t.scheduled.includes("T") ? this.t("scheduledAt", { time: t.scheduled.split("T")[1] }) : this.t("today")),
 			""
 		);
 		section(
-			"今日截止",
+			this.t("due"),
 			groups.todayDue,
-			(t) => (t.due && t.due.includes("T") ? `今天 ${t.due.split("T")[1]} 截止` : "今天截止"),
+			(t) => (t.due && t.due.includes("T") ? this.t("dueAt", { time: t.due.split("T")[1] }) : this.t("due")),
 			""
 		);
 		if (groups.completedToday.length) {
 			const done = el.createDiv({ cls: "tnct-today-donefoot" });
-			done.textContent = `今日已完成 ${groups.completedToday.length} 项`;
+			done.textContent = this.t("doneToday", { count: groups.completedToday.length });
 		}
 	}
 
@@ -1707,12 +1740,12 @@ class TodayListModal extends Modal {
 			const dot = document.createElement("span");
 			dot.className = "tnct-float-dot";
 			dot.style.background = pri.color;
-			dot.title = `优先级：${pri.label || task.priority}`;
+			dot.title = this.t("priority", { priority: pri.label || task.priority });
 			titleLine.appendChild(dot);
 		}
 		const name = document.createElement("span");
 		name.textContent = task.title + (task.recurrence ? " ⟳" : "");
-		name.title = task.recurrence ? `${task.title}（循环任务，完成按钮针对今日实例）` : task.title;
+		name.title = task.recurrence ? this.t("recurringTitle", { title: task.title }) : task.title;
 		titleLine.appendChild(name);
 		const metaLine = document.createElement("div");
 		metaLine.className = "tnct-today-meta";
@@ -1737,9 +1770,9 @@ class TodayListModal extends Modal {
 		};
 		if (!task.recurrence) {
 			// 循环任务推迟会改动整个模板日期，不提供推迟按钮
-			actions.appendChild(mkBtn("明天", "任务日期修改到明天", () => postponeTask(this.tweaks, task, 1, true)));
+			actions.appendChild(mkBtn(this.t("tomorrow"), this.t("tomorrowTitle"), () => postponeTask(this.tweaks, task, 1, true)));
 			actions.appendChild(
-				mkBtn("N天…", "输入自定义天数推迟", () => {
+				mkBtn(this.t("postponeDays"), this.t("postponeDaysTitle"), () => {
 					// 就地将按钮行换成天数输入框；取消/无效输入则还原按钮
 					return new Promise((resolve) => {
 						const restore = () => {
@@ -1759,7 +1792,7 @@ class TodayListModal extends Modal {
 				})
 			);
 		}
-		actions.appendChild(mkBtn(task.recurrence ? "完成今日" : "完成", "标记为已完成", () => completeByButton(this.tweaks, task)));
+		actions.appendChild(mkBtn(task.recurrence ? this.t("completeRecurring") : this.t("complete"), this.t("markComplete"), () => completeByButton(this.tweaks, task)));
 
 		row.append(main, actions);
 		return row;
@@ -1780,9 +1813,9 @@ class TodayListModal extends Modal {
 			});
 			return b;
 		};
-		actions.appendChild(mkBtn("明天", "任务日期修改到明天", () => postponeTask(this.tweaks, task, 1, true)));
+		actions.appendChild(mkBtn(this.t("tomorrow"), this.t("tomorrowTitle"), () => postponeTask(this.tweaks, task, 1, true)));
 		actions.appendChild(
-			mkBtn("N天…", "输入自定义天数推迟", () => {
+			mkBtn(this.t("postponeDays"), this.t("postponeDaysTitle"), () => {
 				return new Promise((resolve) => {
 					const restore = () => {
 						while (actions.firstChild) actions.removeChild(actions.firstChild);
@@ -1800,7 +1833,7 @@ class TodayListModal extends Modal {
 				});
 			})
 		);
-		actions.appendChild(mkBtn("完成", "标记为已完成", () => completeByButton(this.tweaks, task)));
+		actions.appendChild(mkBtn(this.t("complete"), this.t("markComplete"), () => completeByButton(this.tweaks, task)));
 	}
 }
 
@@ -1814,6 +1847,8 @@ class RecentFilesModal extends Modal {
 		this._suggest = []; // 搜索建议当前结果
 		this._dragPath = null; // 正在拖动的常用文件路径
 	}
+
+	t(key, params) { return getUiText(this.tweaks?.host || this.tweaks, key, params); }
 
 	onOpen() {
 		// Obsidian 的 .modal 自带默认宽度：直接给弹窗容器设宽，否则内容会溢出到弹窗外（真实踩坑）
@@ -1829,7 +1864,7 @@ class RecentFilesModal extends Modal {
 		const el = this.contentEl;
 		el.empty();
 		el.addClass("tnct-recent");
-		el.createEl("h3", { text: "文件" });
+		el.createEl("h3", { text: this.t("files") });
 		const cols = el.createDiv({ cls: "tnct-recent-cols" });
 		this.renderRecentColumn(cols);
 		this.renderFavoritesColumn(cols);
@@ -1851,7 +1886,7 @@ class RecentFilesModal extends Modal {
 
 	renderRecentColumn(cols) {
 		const col = cols.createDiv({ cls: "tnct-recent-col" });
-		this.renderColumnTitle(col, "最近", "history", "");
+		this.renderColumnTitle(col, this.t("recent"), "history", "");
 		const list = col.createDiv({ cls: "tnct-recent-list" });
 		const app = this.tweaks.app;
 		// getLastOpenFiles() 内部把读取数写死为 maxCount:10；直接调底层 getRecentFiles
@@ -1873,7 +1908,7 @@ class RecentFilesModal extends Modal {
 		const paths = sanitizeRecentPaths(raw, (p) => !!app.vault.getAbstractFileByPath(p), RECENT_LIMIT);
 		this._lastPaths = paths;
 		if (!paths.length) {
-			list.createEl("p", { cls: "tnct-today-empty", text: "暂无最近打开的文件" });
+			list.createEl("p", { cls: "tnct-today-empty", text: this.t("noRecent") });
 			return;
 		}
 		for (const path of paths) {
@@ -1888,10 +1923,10 @@ class RecentFilesModal extends Modal {
 
 	renderFavoritesColumn(cols) {
 		const col = cols.createDiv({ cls: "tnct-recent-col" });
-		this.renderColumnTitle(col, "常用", "star", "tnct-title-fav");
+		this.renderColumnTitle(col, this.t("favorites"), "star", "tnct-title-fav");
 		// 搜索添加框 + 建议下拉
 		const searchWrap = col.createDiv({ cls: "tnct-fav-searchwrap" });
-		const input = searchWrap.createEl("input", { type: "text", placeholder: "搜索文件名添加常用…" });
+		const input = searchWrap.createEl("input", { type: "text", placeholder: this.t("searchFavorite") });
 		this._favInput = input;
 		input.addEventListener("input", () => this.renderSuggest(input.value));
 		input.addEventListener("keydown", (ev) => {
@@ -1915,7 +1950,7 @@ class RecentFilesModal extends Modal {
 		});
 		this._favShown = favs;
 		if (!favs.length) {
-			list.createEl("p", { cls: "tnct-today-empty", text: "右键最近文件或用上方搜索框添加常用" });
+			list.createEl("p", { cls: "tnct-today-empty", text: this.t("emptyFavorites") });
 			return;
 		}
 		for (const path of favs) {
@@ -1955,7 +1990,7 @@ class RecentFilesModal extends Modal {
 			item.createSpan({ cls: "tnct-recent-name", text: file.name });
 			item.createSpan({
 				cls: "tnct-recent-path",
-				text: file.parent && file.parent.path !== "/" ? file.parent.path : "（根目录）",
+				text: file.parent && file.parent.path !== "/" ? file.parent.path : this.t("root"),
 			});
 			item.addEventListener("click", () => this.addFavorite(file));
 		}
@@ -1966,7 +2001,7 @@ class RecentFilesModal extends Modal {
 		if (!favs.includes(file.path)) {
 			favs.push(file.path);
 			this.tweaks.persistState();
-			new Notice(`已添加常用：${file.name}`);
+			new Notice(this.t("favoriteAdded", { name: file.name }));
 		}
 		this.render();
 		// 重建后恢复搜索词并聚焦，便于连续添加（render 会清空输入框）
@@ -1988,7 +2023,7 @@ class RecentFilesModal extends Modal {
 		if (idx >= 0) {
 			favs.splice(idx, 1);
 			this.tweaks.persistState();
-			new Notice(`已取消常用：${file.name}`);
+			new Notice(this.t("favoriteRemoved", { name: file.name }));
 		}
 		this.render();
 	}
@@ -2008,11 +2043,11 @@ class RecentFilesModal extends Modal {
 		name.textContent = file.name;
 		const dir = document.createElement("div");
 		dir.className = "tnct-recent-path";
-		dir.textContent = file.parent && file.parent.path !== "/" ? file.parent.path : "（根目录）";
+		dir.textContent = file.parent && file.parent.path !== "/" ? file.parent.path : this.t("root");
 		main.append(name, dir);
 		main.title = isFav
-			? `${file.path}\n左键打开 · Ctrl+左键新标签页 · 右键菜单 · 拖动排序`
-			: `${file.path}\n左键打开 · Ctrl+左键新标签页 · 右键菜单`;
+			? `${file.path}\n${this.t("rowFavorite")}`
+			: `${file.path}\n${this.t("rowRecent")}`;
 		row.appendChild(main);
 
 		// 删除确认态
@@ -2020,14 +2055,14 @@ class RecentFilesModal extends Modal {
 			const actions = document.createElement("div");
 			actions.className = "tnct-today-actions";
 			const yes = document.createElement("button");
-			yes.textContent = "确认删除";
+			yes.textContent = this.t("yesDelete");
 			yes.className = "mod-warning";
 			yes.addEventListener("click", (ev) => {
 				ev.stopPropagation();
 				this.confirmDelete(file);
 			});
 			const no = document.createElement("button");
-			no.textContent = "取消";
+			no.textContent = this.t("cancel");
 			no.addEventListener("click", (ev) => {
 				ev.stopPropagation();
 				this._confirmDeletePath = null;
@@ -2115,7 +2150,7 @@ class RecentFilesModal extends Modal {
 			this.close();
 		} catch (e) {
 			console.error("[TN Calendar Tweaks] open recent file failed:", e);
-			new Notice("打开文件失败");
+			new Notice(this.t("openFailed"));
 		}
 	}
 
@@ -2124,27 +2159,27 @@ class RecentFilesModal extends Modal {
 		if (column === "fav") {
 			menu.addItem((item) =>
 				item
-					.setTitle("取消常用")
+					.setTitle(this.t("removeFavorite"))
 					.setIcon("star")
 					.onClick(() => this.removeFavorite(file))
 			);
 		}
 		menu.addItem((item) =>
 			item
-				.setTitle("重命名")
+				.setTitle(this.t("rename"))
 				.setIcon("pencil")
 				.onClick(() => new RenameModal(this.app, this, file).open())
 		);
 		menu.addItem((item) =>
 			item
-				.setTitle("复制双向链接")
+				.setTitle(this.t("copyLink"))
 				.setIcon("brackets")
 				.onClick(() => this.copyRecentLink(file))
 		);
 		menu.addSeparator();
 		menu.addItem((item) =>
 			item
-				.setTitle("删除此文件")
+				.setTitle(this.t("trash"))
 				.setIcon("trash")
 				.onClick(() => {
 					this._confirmDeletePath = file.path;
@@ -2157,7 +2192,7 @@ class RecentFilesModal extends Modal {
 			menu.addSeparator();
 			menu.addItem((item) =>
 				item
-					.setTitle(isFav ? "★ 已在常用（点击移除）" : "⭐ 添加到常用")
+					.setTitle(isFav ? this.t("removeFavoriteMenu") : this.t("addFavorite"))
 					.setIcon("star")
 					.onClick(() => (isFav ? this.removeFavorite(file) : this.addFavorite(file)))
 			);
@@ -2169,11 +2204,11 @@ class RecentFilesModal extends Modal {
 		try {
 			const link = `[[${recentLinkName(file)}]]`;
 			await navigator.clipboard.writeText(link);
-			new Notice(`已复制：${link}`);
+			new Notice(this.t("copied", { link }));
 			return true;
 		} catch (e) {
 			console.error("[TN Calendar Tweaks] copy link failed:", e);
-			new Notice("复制失败");
+			new Notice(this.t("copyFailed"));
 			return false;
 		}
 	}
@@ -2182,10 +2217,10 @@ class RecentFilesModal extends Modal {
 		try {
 			// 系统回收站；失败时 Obsidian 自动回落到库内 .trash
 			await this.tweaks.app.vault.trash(file, true);
-			new Notice(`已移入回收站：${file.name}`);
+			new Notice(this.t("movedToTrash", { name: file.name }));
 		} catch (e) {
 			console.error("[TN Calendar Tweaks] trash file failed:", e);
-			new Notice("删除失败（文件仍在原处）");
+			new Notice(this.t("deleteFailed"));
 		}
 		this._confirmDeletePath = null;
 		this.render();
@@ -2206,15 +2241,17 @@ class RenameModal extends Modal {
 		this.file = file;
 	}
 
+	t(key, params) { return getUiText(this.recent?.tweaks?.host || this.recent?.tweaks, key, params); }
+
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.addClass("tnct-rename");
-		contentEl.createEl("h3", { text: "重命名文件" });
+		contentEl.createEl("h3", { text: this.t("renameFile") });
 		contentEl.createEl("p", { cls: "tnct-modal-date", text: this.file.path });
 		const input = contentEl.createEl("input", { type: "text", value: this.file.name, cls: "tnct-rename-input" });
 		const btns = contentEl.createDiv({ cls: "modal-button-container" });
-		btns.createEl("button", { text: "取消" }).addEventListener("click", () => this.close());
-		const ok = btns.createEl("button", { cls: "mod-cta", text: "重命名" });
+		btns.createEl("button", { text: this.t("cancel") }).addEventListener("click", () => this.close());
+		const ok = btns.createEl("button", { cls: "mod-cta", text: this.t("rename") });
 		ok.addEventListener("click", () => this.submitRename(input.value));
 		input.addEventListener("keydown", (ev) => {
 			if (ev.key === "Enter") {
@@ -2238,24 +2275,24 @@ class RenameModal extends Modal {
 		try {
 			const res = buildRenameTarget(this.file, value);
 			if (!res.ok) {
-				new Notice(res.reason);
+				new Notice(this.t(res.reason === "名称不能为空" ? "invalidNameEmpty" : "invalidNameSeparator"));
 				return false;
 			}
 			if (res.target === this.file.path) return this.close();
 			const app = this.recent.tweaks.app;
 			if (app.vault.getAbstractFileByPath(res.target)) {
-				new Notice("同名文件已存在");
+				new Notice(this.t("duplicate"));
 				return false;
 			}
 			try {
 				// renameFile 会自动更新全库双向链接
 				await app.fileManager.renameFile(this.file, res.target);
-				new Notice(`已重命名为：${res.target.split("/").pop()}`);
+				new Notice(this.t("renamed", { name: res.target.split("/").pop() }));
 				this.close();
 				return true;
 			} catch (e) {
 				console.error("[TN Calendar Tweaks] rename failed:", e);
-				new Notice("重命名失败");
+				new Notice(this.t("renameFailed"));
 				return false;
 			}
 		} finally {
