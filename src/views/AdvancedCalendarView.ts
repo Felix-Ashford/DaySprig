@@ -10,8 +10,6 @@ import {
 	setTooltip,
 	setIcon,
 } from "obsidian";
-import { ICSEventInfoModal } from "../modals/ICSEventInfoModal";
-import { ICSEventContextMenu } from "../components/ICSEventContextMenu";
 import { TaskContextMenu } from "../components/TaskContextMenu";
 import { PriorityContextMenu } from "../components/PriorityContextMenu";
 import { RecurrenceContextMenu } from "../components/RecurrenceContextMenu";
@@ -35,7 +33,6 @@ import {
 	TimeBlock,
 	FilterQuery,
 	CalendarViewPreferences,
-	ICSEvent,
 } from "../types";
 import { TaskCreationModal } from "../modals/TaskCreationModal";
 import { TaskEditModal } from "../modals/TaskEditModal";
@@ -73,7 +70,6 @@ import {
 	createScheduledEvent as createScheduledEventCore,
 	createDueEvent as createDueEventCore,
 	createTimeEntryEvents as createTimeEntryEventsCore,
-	createICSEvent as createICSEventCore,
 	generateRecurringTaskInstances as generateRecurringTaskInstancesCore,
 	createNextScheduledEvent as createNextScheduledEventCore,
 	createRecurringEvent as createRecurringEventCore,
@@ -137,7 +133,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 	private showDue: boolean;
 	private showTimeEntries: boolean;
 	private showRecurring: boolean;
-	private showICSEvents: boolean;
 	private showTimeblocks: boolean;
 	private showAllDaySlot: boolean;
 
@@ -156,7 +151,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		this.showDue = this.plugin.settings.calendarViewSettings.defaultShowDue;
 		this.showTimeEntries = this.plugin.settings.calendarViewSettings.defaultShowTimeEntries;
 		this.showRecurring = this.plugin.settings.calendarViewSettings.defaultShowRecurring;
-		this.showICSEvents = this.plugin.settings.calendarViewSettings.defaultShowICSEvents;
 		this.showTimeblocks = this.plugin.settings.calendarViewSettings.defaultShowTimeblocks;
 		this.showAllDaySlot = true; // Default to true to match FullCalendar's default
 
@@ -208,9 +202,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 			this.showDue = savedPreferences.showDue;
 			this.showTimeEntries = savedPreferences.showTimeEntries;
 			this.showRecurring = savedPreferences.showRecurring;
-			this.showICSEvents =
-				savedPreferences.showICSEvents ??
-				this.plugin.settings.calendarViewSettings.defaultShowICSEvents;
 			this.showTimeblocks =
 				savedPreferences.showTimeblocks ??
 				this.plugin.settings.calendarViewSettings.defaultShowTimeblocks;
@@ -370,16 +361,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 
 		const options = [
 			{
-				id: "icsEvents",
-				label: this.plugin.i18n.translate("views.advancedCalendar.viewOptions.calendarSubscriptions"),
-				value: this.showICSEvents,
-				onChange: (value: boolean) => {
-					this.showICSEvents = value;
-					this.saveViewPreferences();
-					this.refreshEvents();
-				},
-			},
-			{
 				id: "timeEntries",
 				label: this.plugin.i18n.translate("views.advancedCalendar.viewOptions.timeEntries"),
 				value: this.showTimeEntries,
@@ -454,7 +435,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 			{ id: "due", label: "Due dates", value: this.showDue },
 			{ id: "timeEntries", label: "Time entries", value: this.showTimeEntries },
 			{ id: "recurring", label: "Recurring tasks", value: this.showRecurring },
-			{ id: "icsEvents", label: "Calendar subscriptions", value: this.showICSEvents },
 		];
 
 		// Add timeblocks option if enabled
@@ -478,9 +458,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 				break;
 			case "recurring":
 				this.showRecurring = enabled;
-				break;
-			case "icsEvents":
-				this.showICSEvents = enabled;
 				break;
 			case "timeblocks":
 				this.showTimeblocks = enabled;
@@ -521,22 +498,13 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		const toolbarConfig = {
 			left: "prev,next today",
 			center: isNarrowView ? "" : "title", // Hide title in narrow views
-			right: "refreshICS multiMonthYear,dayGridMonth,timeGridWeek,timeGridCustom,timeGridDay,listWeek",
+			right: "multiMonthYear,dayGridMonth,timeGridWeek,timeGridCustom,timeGridDay,listWeek",
 		};
 		return toolbarConfig;
 	}
 
 	private getCustomButtons() {
-		const customButtons = {
-			refreshICS: {
-				text: this.plugin.i18n.translate("views.advancedCalendar.buttons.refresh"),
-				hint: this.plugin.i18n.translate("views.advancedCalendar.buttons.refreshHint"),
-				click: () => {
-					this.handleRefreshClick();
-				},
-			},
-		};
-		return customButtons;
+		return {};
 	}
 
 	private sanitizeTimeSettings(settings: any) {
@@ -562,23 +530,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		}
 
 		return sanitizedSettings;
-	}
-
-	private async handleRefreshClick() {
-		if (!this.plugin.icsSubscriptionService) {
-			new Notice(this.plugin.i18n.translate("views.advancedCalendar.notices.icsServiceNotAvailable"));
-			return;
-		}
-
-		try {
-			await this.plugin.icsSubscriptionService.refreshAllSubscriptions();
-			new Notice(this.plugin.i18n.translate("views.advancedCalendar.notices.calendarRefreshedAll"));
-			// Force calendar to re-render with updated ICS events
-			this.refreshEvents();
-		} catch (error) {
-			console.error("Error refreshing subscriptions:", error);
-			new Notice(this.plugin.i18n.translate("views.advancedCalendar.notices.refreshFailed"));
-		}
 	}
 
 	openScheduleTasksModal() {
@@ -738,7 +689,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 			showDue: this.showDue,
 			showTimeEntries: this.showTimeEntries,
 			showRecurring: this.showRecurring,
-			showICSEvents: this.showICSEvents,
 			showTimeblocks: this.showTimeblocks,
 			headerCollapsed: this.headerCollapsed,
 			showAllDaySlot: this.showAllDaySlot,
@@ -762,9 +712,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		}
 		if (viewOptions.hasOwnProperty("showRecurring")) {
 			this.showRecurring = viewOptions.showRecurring;
-		}
-		if (viewOptions.hasOwnProperty("showICSEvents")) {
-			this.showICSEvents = viewOptions.showICSEvents;
 		}
 		if (viewOptions.hasOwnProperty("showTimeblocks")) {
 			this.showTimeblocks = viewOptions.showTimeblocks;
@@ -983,17 +930,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 					events.push(...timeEvents);
 				}
 			}
-
-			// Add ICS events
-			if (this.showICSEvents && this.plugin.icsSubscriptionService) {
-				const icsEvents = this.plugin.icsSubscriptionService.getAllEvents();
-				for (const icsEvent of icsEvents) {
-					const calendarEvent = this.createICSEvent(icsEvent);
-					if (calendarEvent) {
-						events.push(calendarEvent);
-					}
-				}
-			}
 		} catch (error) {
 			console.error("Error getting calendar events:", error);
 		}
@@ -1108,10 +1044,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 
 	createTimeEntryEvents(task: TaskInfo): CalendarEvent[] {
 		return createTimeEntryEventsCore(task, this.plugin);
-	}
-
-	createICSEvent(icsEvent: ICSEvent): CalendarEvent | null {
-		return createICSEventCore(icsEvent, this.plugin);
 	}
 
 	generateRecurringTaskInstances(
@@ -1257,7 +1189,7 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 			console.warn("[AdvancedCalendarView] Event clicked without extendedProps");
 			return;
 		}
-		const { taskInfo, icsEvent, timeblock, eventType, subscriptionName, originalDate } =
+		const { taskInfo, timeblock, eventType, originalDate } =
 			clickInfo.event.extendedProps;
 		const jsEvent = clickInfo.jsEvent;
 
@@ -1285,12 +1217,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 			return;
 		}
 
-		if (eventType === "ics") {
-			// ICS events are read-only, show info modal
-			this.showICSEventInfo(icsEvent, subscriptionName);
-			return;
-		}
-
 		// Handle task clicks with single/double click detection based on user settings
 		if (taskInfo && jsEvent.button === 0) {
 			handleCalendarTaskClick(taskInfo, this.plugin, jsEvent, clickInfo.event.id);
@@ -1312,8 +1238,8 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 			originalDate,
 		} = dropInfo.event.extendedProps;
 
-		if (eventType === "timeEntry" || eventType === "ics") {
-			// Time entries and ICS events cannot be moved
+		if (eventType === "timeEntry") {
+			// Time entries cannot be moved
 			dropInfo.revert();
 			return;
 		}
@@ -1650,26 +1576,15 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		const extendedProps = arg.event.extendedProps || {};
 		const {
 			taskInfo,
-			icsEvent,
 			timeblock,
 			eventType,
 			isCompleted = false,
 			isRecurringInstance = false,
 			instanceDate,
-			subscriptionName,
 		} = extendedProps;
 
 		// Check if we're in a list view
 		const isListView = arg.view.type.startsWith("list");
-
-		// Handle ICS events FIRST in list view - they should be completely untouched
-		if (isListView && eventType === "ics") {
-			// Just set the basic attributes and return immediately
-			arg.el.setAttribute("data-event-type", "ics");
-			arg.el.setAttribute("data-ics-event", "true");
-			// Don't call any other styling or processing
-			return;
-		}
 
 		// Apply enhanced task card styling for list view task events
 		if (
@@ -1686,29 +1601,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 
 		// Set common event type attribute for all events
 		arg.el.setAttribute("data-event-type", eventType || "unknown");
-
-		// Handle ICS events
-		if (eventType === "ics") {
-			// Add data attributes and class for ICS events
-			arg.el.setAttribute("data-ics-event", "true");
-			arg.el.setAttribute("data-subscription", subscriptionName || "Unknown");
-			arg.el.classList.add("fc-ics-event");
-
-			// Add tooltip with subscription name
-			setTooltip(
-				arg.el,
-				`${icsEvent?.title || "Event"} (from ${subscriptionName || "Calendar subscription"})`,
-				{ placement: "top" }
-			);
-
-			// Add context menu for ICS events
-			arg.el.addEventListener("contextmenu", (jsEvent: MouseEvent) => {
-				jsEvent.preventDefault();
-				jsEvent.stopPropagation();
-				this.showICSEventContextMenu(jsEvent, icsEvent, subscriptionName);
-			});
-			return;
-		}
 
 		// Handle timeblock events using shared handlers
 		if (eventType === "timeblock" && timeblock) {
@@ -1774,9 +1666,7 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		// Add hover preview and context menu event listeners
 		if (taskInfo) {
 			// Add hover preview functionality for all task-related events
-			if (eventType !== "ics") {
-				addTaskHoverPreview(arg.el, taskInfo, this.plugin, "daysprig-advanced-calendar");
-			}
+			addTaskHoverPreview(arg.el, taskInfo, this.plugin, "daysprig-advanced-calendar");
 
 			// Add context menu functionality
 			arg.el.addEventListener("contextmenu", (jsEvent: MouseEvent) => {
@@ -1864,13 +1754,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		});
 		this.functionListeners.push(filterDataListener);
 
-		// Listen for ICS subscription changes
-		if (this.plugin.icsSubscriptionService) {
-			const icsDataListener = this.plugin.icsSubscriptionService.on("data-changed", () => {
-				this.refreshEvents();
-			});
-			this.functionListeners.push(icsDataListener);
-		}
 
 		// Listen for timeblocking toggle changes
 		const timeblockingListener = this.plugin.emitter.on(
@@ -2525,30 +2408,6 @@ export class AdvancedCalendarView extends ItemView implements OptimizedView {
 		this.contentEl.empty();
 	}
 
-	private showICSEventInfo(icsEvent: ICSEvent, subscriptionName?: string): void {
-		const modal = new ICSEventInfoModal(this.app, this.plugin, icsEvent, subscriptionName);
-		modal.open();
-	}
-
-
-	private showICSEventContextMenu(
-		jsEvent: MouseEvent,
-		icsEvent: ICSEvent,
-		subscriptionName?: string
-	): void {
-		const contextMenu = new ICSEventContextMenu({
-			icsEvent: icsEvent,
-			plugin: this.plugin,
-			subscriptionName: subscriptionName,
-			onUpdate: () => {
-				// For ICS events, we might need manual refresh since they're not managed by ViewPerformanceService
-				// But let's try trusting the system first
-				// Could add selective refresh logic here if needed
-			},
-		});
-
-		contextMenu.show(jsEvent);
-	}
 
 	private async showTaskContextMenuForEvent(
 		jsEvent: MouseEvent,

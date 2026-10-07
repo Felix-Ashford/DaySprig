@@ -14,15 +14,6 @@ export interface TaskTemplateData {
 }
 
 /**
- * Data for processing ICS event-specific template variables
- */
-export interface ICSTemplateData {
-	title?: string;
-	location?: string;
-	description?: string;
-}
-
-/**
  * Options for processing folder templates
  */
 export interface FolderTemplateOptions {
@@ -36,11 +27,6 @@ export interface FolderTemplateOptions {
 	 * Task-specific data for template variables
 	 */
 	taskData?: TaskTemplateData;
-
-	/**
-	 * ICS event-specific data for template variables
-	 */
-	icsData?: ICSTemplateData;
 
 	/**
 	 * Optional function to extract the basename from a project string
@@ -74,10 +60,6 @@ export interface FolderTemplateOptions {
  * - {{title}}, {{titleLower}}, {{titleUpper}}, {{titleSnake}}, {{titleKebab}}, {{titleCamel}}, {{titlePascal}}
  * - {{dueDate}}, {{scheduledDate}}
  *
- * ICS event variables (when icsData is provided):
- * - {{icsEventTitle}}, {{icsEventTitleLower}}, {{icsEventTitleUpper}}, etc.
- * - {{icsEventLocation}}
- * - {{icsEventDescription}}
  *
  * @param folderTemplate - The template string containing variables to replace
  * @param options - Options for processing the template
@@ -95,12 +77,6 @@ export interface FolderTemplateOptions {
  * })
  * // => "Projects/MyProject/active"
  *
- * // ICS event template
- * processFolderTemplate("Events/{{year}}/{{icsEventTitle}}", {
- *   date: new Date(),
- *   icsData: { title: "Team Meeting" }
- * })
- * // => "Events/2025/Team Meeting"
  * ```
  */
 export function processFolderTemplate(
@@ -111,7 +87,7 @@ export function processFolderTemplate(
 		return folderTemplate;
 	}
 
-	const { date = new Date(), taskData, icsData, extractProjectBasename } = options;
+	const { date = new Date(), taskData, extractProjectBasename } = options;
 
 	let processedPath = folderTemplate;
 
@@ -203,58 +179,6 @@ export function processFolderTemplate(
 					.replace(/\s+/g, "")
 			: "";
 		processedPath = processedPath.replace(/\{\{titlePascal\}\}/g, titlePascal);
-	}
-
-	// Replace ICS event variables if icsData is provided
-	if (icsData) {
-		// Handle ICS event title (sanitized for folder names)
-		const icsEventTitle = icsData.title ? icsData.title.replace(/[<>:"/\\|?*]/g, "_") : "";
-		processedPath = processedPath.replace(/\{\{icsEventTitle\}\}/g, icsEventTitle);
-
-		// ICS title variations (all sanitized for folder names)
-		const icsEventTitleLower = icsEventTitle ? icsEventTitle.toLowerCase() : "";
-		processedPath = processedPath.replace(/\{\{icsEventTitleLower\}\}/g, icsEventTitleLower);
-
-		const icsEventTitleUpper = icsEventTitle ? icsEventTitle.toUpperCase() : "";
-		processedPath = processedPath.replace(/\{\{icsEventTitleUpper\}\}/g, icsEventTitleUpper);
-
-		const icsEventTitleSnake = icsEventTitle
-			? icsEventTitle.toLowerCase().replace(/\s+/g, "_")
-			: "";
-		processedPath = processedPath.replace(/\{\{icsEventTitleSnake\}\}/g, icsEventTitleSnake);
-
-		const icsEventTitleKebab = icsEventTitle
-			? icsEventTitle.toLowerCase().replace(/\s+/g, "-")
-			: "";
-		processedPath = processedPath.replace(/\{\{icsEventTitleKebab\}\}/g, icsEventTitleKebab);
-
-		const icsEventTitleCamel = icsEventTitle
-			? icsEventTitle
-					.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
-						index === 0 ? word.toLowerCase() : word.toUpperCase()
-					)
-					.replace(/\s+/g, "")
-			: "";
-		processedPath = processedPath.replace(/\{\{icsEventTitleCamel\}\}/g, icsEventTitleCamel);
-
-		const icsEventTitlePascal = icsEventTitle
-			? icsEventTitle
-					.replace(/(?:^\w|[A-Z]|\b\w)/g, (word) => word.toUpperCase())
-					.replace(/\s+/g, "")
-			: "";
-		processedPath = processedPath.replace(/\{\{icsEventTitlePascal\}\}/g, icsEventTitlePascal);
-
-		// Handle ICS event location (sanitized for folder names)
-		const icsEventLocation = icsData.location
-			? icsData.location.replace(/[<>:"/\\|?*]/g, "_")
-			: "";
-		processedPath = processedPath.replace(/\{\{icsEventLocation\}\}/g, icsEventLocation);
-
-		// Handle ICS event description (sanitized for folder names)
-		const icsEventDescription = icsData.description
-			? icsData.description.replace(/[<>:"/\\|?*]/g, "_")
-			: "";
-		processedPath = processedPath.replace(/\{\{icsEventDescription\}\}/g, icsEventDescription);
 	}
 
 	// Replace date variables with current date values

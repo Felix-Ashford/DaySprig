@@ -3,15 +3,9 @@ export const MINI_CALENDAR_VIEW_TYPE = "daysprig-mini-calendar-view";
 export const ADVANCED_CALENDAR_VIEW_TYPE = "daysprig-advanced-calendar-view";
 export const TASK_LIST_VIEW_TYPE = "daysprig-task-list-view";
 export const NOTES_VIEW_TYPE = "daysprig-notes-view";
-export const AGENDA_VIEW_TYPE = "daysprig-agenda-view";
-export const POMODORO_VIEW_TYPE = "daysprig-pomodoro-view";
-export const POMODORO_STATS_VIEW_TYPE = "daysprig-pomodoro-stats-view";
-export const STATS_VIEW_TYPE = "daysprig-stats-view";
-export const KANBAN_VIEW_TYPE = "daysprig-kanban-view";
 export const SUBTASK_WIDGET_VIEW_TYPE = "daysprig-subtask-widget-view";
 
 // Bases view IDs (for Bases plugin integration)
-export const BASES_CALENDAR_VIEW_ID = "daysprigCalendar";
 
 // Event types
 export const EVENT_DATE_SELECTED = "date-selected";
@@ -19,10 +13,6 @@ export const EVENT_TAB_CHANGED = "tab-changed";
 export const EVENT_DATA_CHANGED = "data-changed";
 export const EVENT_TASK_UPDATED = "task-updated";
 export const EVENT_TASK_DELETED = "task-deleted";
-export const EVENT_POMODORO_START = "pomodoro-start";
-export const EVENT_POMODORO_COMPLETE = "pomodoro-complete";
-export const EVENT_POMODORO_INTERRUPT = "pomodoro-interrupt";
-export const EVENT_POMODORO_TICK = "pomodoro-tick";
 export const EVENT_TIMEBLOCKING_TOGGLED = "timeblocking-toggled";
 export const EVENT_TIMEBLOCK_UPDATED = "timeblock-updated";
 export const EVENT_TIMEBLOCK_DELETED = "timeblock-deleted";
@@ -602,50 +592,6 @@ export interface FileEventHandlers {
 	create?: (file: any) => void;
 }
 
-// Pomodoro types
-export interface PomodoroTimePeriod {
-	startTime: string; // ISO datetime when active period started
-	endTime?: string; // ISO datetime when active period ended (undefined if currently active)
-}
-
-export interface PomodoroSession {
-	id: string;
-	taskPath?: string; // optional, can run timer without task
-	startTime: string; // ISO datetime when session was first created
-	endTime?: string; // ISO datetime when session completed/interrupted
-	plannedDuration: number; // planned duration in minutes
-	type: "work" | "short-break" | "long-break";
-	completed: boolean;
-	interrupted?: boolean;
-	activePeriods: PomodoroTimePeriod[]; // Array of active timing periods (excludes pauses)
-}
-
-export interface PomodoroState {
-	isRunning: boolean;
-	currentSession?: PomodoroSession;
-	timeRemaining: number; // seconds
-	nextSessionType?: "work" | "short-break" | "long-break"; // What type of session to start next when no current session
-}
-
-export interface PomodoroSessionHistory {
-	id: string;
-	startTime: string; // ISO datetime when session was created
-	endTime: string; // ISO datetime when session completed/interrupted
-	plannedDuration: number; // originally planned duration in minutes
-	type: "work" | "short-break" | "long-break";
-	taskPath?: string; // optional task association
-	completed: boolean; // true if session finished normally, false if interrupted
-	activePeriods: PomodoroTimePeriod[]; // Array of active timing periods (excludes pauses)
-}
-
-export interface PomodoroHistoryStats {
-	pomodorosCompleted: number;
-	currentStreak: number;
-	totalMinutes: number;
-	averageSessionLength: number;
-	completionRate: number; // percentage of sessions completed vs interrupted
-}
-
 // Field mapping and customization types
 export interface FieldMapping {
 	title: string;
@@ -709,16 +655,6 @@ export interface ExportedConfig {
 	customPriorities: PriorityConfig[];
 }
 
-// Kanban board types
-export type KanbanGroupByField = "status" | "priority" | "context";
-
-export interface KanbanBoardConfig {
-	id: string; // Unique ID
-	name: string; // User-facing name
-	groupByField: KanbanGroupByField; // What to group tasks by
-	columnOrder: string[]; // Order of column values
-}
-
 // UI state management for filter preferences
 export interface ViewFilterState {
 	[viewType: string]: FilterQuery;
@@ -730,7 +666,6 @@ export interface CalendarViewPreferences {
 	showDue: boolean;
 	showTimeEntries: boolean;
 	showRecurring: boolean;
-	showICSEvents: boolean;
 	showTimeblocks?: boolean;
 	headerCollapsed?: boolean;
 	showAllDaySlot?: boolean;
@@ -741,101 +676,10 @@ export interface ViewPreferences {
 	[viewType: string]: any; // Can be CalendarViewPreferences or other view-specific types
 }
 
-// ICS Subscription types
-export interface ICSSubscription {
-	id: string;
-	name: string;
-	url?: string; // Optional for local files
-	filePath?: string; // Path to local ICS file
-	type: "remote" | "local"; // Type of ICS source
-	color: string;
-	enabled: boolean;
-	refreshInterval: number; // minutes (for remote) or check interval (for local)
-	lastFetched?: string; // ISO timestamp
-	lastError?: string;
-}
-
-export interface ICSEvent {
-	id: string;
-	subscriptionId: string;
-	title: string;
-	description?: string;
-	start: string; // ISO timestamp
-	end?: string; // ISO timestamp
-	allDay: boolean;
-	location?: string;
-	url?: string;
-	rrule?: string; // Recurrence rule
-}
-
-export interface ICSCache {
-	subscriptionId: string;
-	events: ICSEvent[];
-	lastUpdated: string; // ISO timestamp
-	expires: string; // ISO timestamp
-}
-
-// Webhook types
-export type WebhookEvent =
-	| "task.created"
-	| "task.updated"
-	| "task.deleted"
-	| "task.completed"
-	| "task.archived"
-	| "task.unarchived"
-	| "time.started"
-	| "time.stopped"
-	| "pomodoro.started"
-	| "pomodoro.completed"
-	| "pomodoro.interrupted"
-	| "recurring.instance.completed"
-	| "reminder.triggered";
-
-export interface WebhookConfig {
-	id: string;
-	url: string;
-	events: WebhookEvent[];
-	secret: string;
-	active: boolean;
-	createdAt: string;
-	lastTriggered?: string;
-	failureCount: number;
-	successCount: number;
-	transformFile?: string; // Optional path to transformation file (.js or .json)
-	corsHeaders?: boolean; // Whether to include custom headers (false for Discord, Slack, etc.)
-}
-
-export interface WebhookPayload {
-	event: WebhookEvent;
-	timestamp: string;
-	vault: {
-		name: string;
-		path?: string;
-	};
-	data: any;
-}
-
-export interface WebhookDelivery {
-	id: string;
-	webhookId: string;
-	event: WebhookEvent;
-	payload: WebhookPayload;
-	status: "pending" | "success" | "failed";
-	attempts: number;
-	lastAttempt?: string;
-	responseStatus?: number;
-	error?: string;
-}
-
 // Auto-archive types
 export interface PendingAutoArchive {
 	taskPath: string;
 	statusChangeTimestamp: number;
 	archiveAfterTimestamp: number;
 	statusValue: string;
-}
-
-// Webhook notification interface for loose coupling
-export interface IWebhookNotifier {
-	triggerWebhook(event: WebhookEvent, data: any): Promise<void>;
 }

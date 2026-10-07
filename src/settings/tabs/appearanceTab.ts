@@ -482,16 +482,6 @@ export function renderAppearanceTab(
 		},
 	});
 
-	createToggleSetting(container, {
-		name: translate("settings.appearance.defaultEventVisibility.showICSEvents.name"),
-		desc: translate("settings.appearance.defaultEventVisibility.showICSEvents.description"),
-		getValue: () => plugin.settings.calendarViewSettings.defaultShowICSEvents,
-		setValue: async (value: boolean) => {
-			plugin.settings.calendarViewSettings.defaultShowICSEvents = value;
-			save();
-		},
-	});
-
 	// Time Settings
 	createSectionHeader(container, translate("settings.appearance.timeSettings.header"));
 	createHelpText(container, translate("settings.appearance.timeSettings.description"));

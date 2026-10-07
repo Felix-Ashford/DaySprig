@@ -1,4 +1,4 @@
-import { FieldMapping, StatusConfig, PriorityConfig, SavedView, WebhookConfig } from "../types";
+import { FieldMapping, StatusConfig, PriorityConfig, SavedView } from "../types";
 import type { FileFilterConfig } from "../suggest/FileSuggestHelper";
 
 export interface UserFieldMapping {
@@ -51,17 +51,6 @@ export interface TaskNotesSettings {
 	// Calendar date-title behavior
 	openDailyNoteOnDateClick: boolean;
 	dailyNoteFolder: string;
-	// Pomodoro settings
-	pomodoroWorkDuration: number; // minutes
-	pomodoroShortBreakDuration: number; // minutes
-	pomodoroLongBreakDuration: number; // minutes
-	pomodoroLongBreakInterval: number; // after X pomodoros
-	pomodoroAutoStartBreaks: boolean;
-	pomodoroAutoStartWork: boolean;
-	pomodoroNotifications: boolean;
-	pomodoroSoundEnabled: boolean;
-	pomodoroSoundVolume: number; // 0-100
-	pomodoroStorageLocation: "plugin" | "daily-notes"; // where to store pomodoro history data
 	// Editor settings
 	enableTaskLinkOverlay: boolean;
 	enableInstantTaskConvert: boolean;
@@ -111,27 +100,17 @@ export interface TaskNotesSettings {
 	viewsButtonAlignment: "left" | "right";
 	// Overdue behavior settings
 	hideCompletedFromOverdue: boolean;
-	// ICS integration settings
-	icsIntegration: ICSIntegrationSettings;
 	// Saved filter views
 	savedViews: SavedView[];
 	// Notification settings
 	enableNotifications: boolean;
 	notificationType: "in-app" | "system";
-	// HTTP API settings
-	enableAPI: boolean;
-	apiPort: number;
-	apiAuthToken: string;
-	// Webhook settings
-	webhooks: WebhookConfig[];
 	// User-defined field mappings (optional)
 	userFields?: UserMappedField[];
 	// Legacy single-field (for migration only)
 	userField?: UserFieldMapping;
 	// Default visible properties for task cards (when no saved view is active)
 	defaultVisibleProperties?: string[];
-	// Bases integration settings
-	enableBases: boolean;
 	// Recurring task behavior
 	maintainDueDateOffsetInRecurring: boolean;
 	// Frontmatter link format settings
@@ -170,20 +149,6 @@ export interface TaskCreationDefaults {
 	defaultReminders: DefaultReminder[];
 }
 
-export interface ICSIntegrationSettings {
-	// Default templates for creating content from ICS events
-	defaultNoteTemplate: string; // Path to template file for notes created from ICS events
-	// Default folders
-	defaultNoteFolder: string; // Folder for notes created from ICS events
-	// Filename settings for ICS event notes
-	icsNoteFilenameFormat: "title" | "zettel" | "timestamp" | "custom";
-	customICSNoteFilenameTemplate: string; // Template for custom format
-	// Automatic export settings
-	enableAutoExport: boolean; // Whether to automatically export tasks to ICS file
-	autoExportPath: string; // Path where the ICS file should be saved
-	autoExportInterval: number; // Export interval in minutes (default: 60)
-}
-
 export interface CalendarViewSettings {
 	// Default view
 	defaultView:
@@ -212,7 +177,6 @@ export interface CalendarViewSettings {
 	defaultShowDueWhenScheduled: boolean;
 	defaultShowTimeEntries: boolean;
 	defaultShowRecurring: boolean;
-	defaultShowICSEvents: boolean;
 	// Timeblocking settings
 	enableTimeblocking: boolean;
 	defaultShowTimeblocks: boolean;

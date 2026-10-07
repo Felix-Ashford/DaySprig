@@ -6,7 +6,6 @@ import {
 	Editor,
 	MarkdownView,
 	TFile,
-	Platform,
 	addIcon,
 	Command,
 	Hotkey,
@@ -28,11 +27,6 @@ import {
 	ADVANCED_CALENDAR_VIEW_TYPE,
 	NOTES_VIEW_TYPE,
 	TASK_LIST_VIEW_TYPE,
-	AGENDA_VIEW_TYPE,
-	POMODORO_VIEW_TYPE,
-	POMODORO_STATS_VIEW_TYPE,
-	STATS_VIEW_TYPE,
-	KANBAN_VIEW_TYPE,
 	TaskInfo,
 	EVENT_DATE_SELECTED,
 	EVENT_DATA_CHANGED,
@@ -43,15 +37,9 @@ import { MiniCalendarView } from "./views/MiniCalendarView";
 import { AdvancedCalendarView } from "./views/AdvancedCalendarView";
 import { TaskListView } from "./views/TaskListView";
 import { NotesView } from "./views/NotesView";
-import { AgendaView } from "./views/AgendaView";
-import { PomodoroView } from "./views/PomodoroView";
-import { PomodoroStatsView } from "./views/PomodoroStatsView";
-import { StatsView } from "./views/StatsView";
-import { KanbanView } from "./views/KanbanView";
 import { TaskCreationModal } from "./modals/TaskCreationModal";
 import { TaskEditModal } from "./modals/TaskEditModal";
 import { TaskSelectorModal } from "./modals/TaskSelectorModal";
-import { PomodoroService } from "./services/PomodoroService";
 import { formatTime, getActiveTimeEntry } from "./utils/helpers";
 import { convertUTCToLocalCalendarDate } from "./utils/dateUtils";
 import { MinimalNativeCache } from "./utils/MinimalNativeCache";
@@ -63,7 +51,6 @@ import { StatusManager } from "./services/StatusManager";
 import { PriorityManager } from "./services/PriorityManager";
 import { TaskService } from "./services/TaskService";
 import { FilterService } from "./services/FilterService";
-import { TaskStatsService } from "./services/TaskStatsService";
 import { ViewPerformanceService } from "./services/ViewPerformanceService";
 import { AutoArchiveService } from "./services/AutoArchiveService";
 import { ViewStateManager } from "./services/ViewStateManager";
@@ -83,17 +70,12 @@ import {
 	createUTCDateFromLocalCalendarDate,
 	parseDateToLocal,
 } from "./utils/dateUtils";
-import { ICSSubscriptionService } from "./services/ICSSubscriptionService";
-import { ICSNoteService } from "./services/ICSNoteService";
 import { MigrationService } from "./services/MigrationService";
 import { showMigrationPrompt } from "./modals/MigrationModal";
 import { StatusBarService } from "./services/StatusBarService";
 import { ProjectSubtasksService } from "./services/ProjectSubtasksService";
 import { ExpandedProjectsService } from "./services/ExpandedProjectsService";
 import { NotificationService } from "./services/NotificationService";
-import { AutoExportService } from "./services/AutoExportService";
-// Type-only import for HTTPAPIService (actual import is dynamic on desktop only)
-import type { HTTPAPIService } from "./services/HTTPAPIService";
 import { createI18nService, I18nService, TranslationKey } from "./i18n";
 import { ReleaseNotesView, RELEASE_NOTES_VIEW_TYPE } from "./views/ReleaseNotesView";
 import { CURRENT_VERSION, RELEASE_NOTES_BUNDLE } from "./releaseNotes";
@@ -156,9 +138,6 @@ export default class DaySprigPlugin extends Plugin {
 	domReconciler: DOMReconciler;
 	uiStateManager: UIStateManager;
 
-	// Pomodoro service
-	pomodoroService: PomodoroService;
-
 	// Customization services
 	fieldMapper: FieldMapper;
 	statusManager: StatusManager;
@@ -167,7 +146,6 @@ export default class DaySprigPlugin extends Plugin {
 	// Business logic services
 	taskService: TaskService;
 	filterService: FilterService;
-	taskStatsService: TaskStatsService;
 	viewStateManager: ViewStateManager;
 	projectSubtasksService: ProjectSubtasksService;
 	expandedProjectsService: ExpandedProjectsService;
@@ -181,15 +159,6 @@ export default class DaySprigPlugin extends Plugin {
 	// Drag and drop manager
 	dragDropManager: DragDropManager;
 
-	// ICS subscription service
-	icsSubscriptionService: ICSSubscriptionService;
-
-	// ICS note service for creating notes/tasks from ICS events
-	icsNoteService: ICSNoteService;
-
-	// Auto export service for continuous ICS export
-	autoExportService: AutoExportService;
-
 	// Migration service
 	migrationService: MigrationService;
 
@@ -199,8 +168,6 @@ export default class DaySprigPlugin extends Plugin {
 	// Notification service
 	notificationService: NotificationService;
 
-	// HTTP API service
-	apiService?: HTTPAPIService;
 
 	// Command localization support
 	private commandDefinitions: TranslatedCommandDefinition[] = [];
@@ -218,8 +185,6 @@ export default class DaySprigPlugin extends Plugin {
 	private migrationPromise: Promise<void> | null = null;
 	// Legacy TaskNotes settings are intentionally not imported.
 
-	// Bases registration state management
-	private basesRegistered = false;
 
 	/**
 	 * Get the system UI locale with proper priority order for TaskNotes plugin.
@@ -323,7 +288,6 @@ export default class DaySprigPlugin extends Plugin {
 			this.priorityManager,
 			this
 		);
-		this.taskStatsService = new TaskStatsService(this.cacheManager);
 		this.viewStateManager = new ViewStateManager(this.app, this);
 		this.projectSubtasksService = new ProjectSubtasksService(this);
 		this.expandedProjectsService = new ExpandedProjectsService(this);
@@ -334,10 +298,6 @@ export default class DaySprigPlugin extends Plugin {
 		this.notificationService = new NotificationService(this);
 		this.viewPerformanceService = new ViewPerformanceService(this);
 
-		// Create ICS services early so views can register event listeners
-		// (initialization will be deferred to lazy loading)
-		this.icsSubscriptionService = new ICSSubscriptionService(this);
-		this.icsNoteService = new ICSNoteService(this);
 
 		// Connect AutoArchiveService to TaskService for status-based auto-archiving
 		this.taskService.setAutoArchiveService(this.autoArchiveService);
@@ -358,17 +318,6 @@ export default class DaySprigPlugin extends Plugin {
 		// Start migration check early (before views can be opened)
 		this.migrationPromise = this.performEarlyMigrationCheck();
 
-		// Early registration attempt for Bases integration
-		if (this.settings?.enableBases && !this.basesRegistered) {
-			try {
-				const { registerBasesTaskList } = await import("./bases/registration");
-				await registerBasesTaskList(this);
-				this.basesRegistered = true;
-			} catch (e) {
-				// eslint-disable-next-line no-console
-				console.debug("[TaskNotes][Bases] Early registration failed:", e);
-			}
-		}
 
 		// Defer expensive initialization until layout is ready
 		this.app.workspace.onLayoutReady(() => {
@@ -379,40 +328,6 @@ export default class DaySprigPlugin extends Plugin {
 		this.resolveReady();
 	}
 
-	/**
-	 * Initialize HTTP API service (desktop only)
-	 */
-	private async initializeHTTPAPI(): Promise<void> {
-		// Only initialize on desktop and if API is enabled
-		if (Platform.isMobile || !this.settings.enableAPI) {
-			return;
-		}
-
-		try {
-			// Use dynamic import() to load HTTPAPIService only on desktop
-			const { HTTPAPIService } = await import("./services/HTTPAPIService");
-
-			this.apiService = new HTTPAPIService(
-				this,
-				this.taskService,
-				this.filterService,
-				this.cacheManager
-			);
-
-			// Connect webhook notifier to TaskService for file-based operations
-			this.taskService.setWebhookNotifier(this.apiService);
-
-			// Connect webhook notifier to PomodoroService for pomodoro events
-			this.pomodoroService.setWebhookNotifier(this.apiService);
-
-			// Start the API server
-			await this.apiService.start();
-			new Notice(`TaskNotes API started on port ${this.apiService.getPort()}`);
-		} catch (error) {
-			console.error("Failed to initialize HTTP API:", error);
-			new Notice("Failed to start TaskNotes API server. Check console for details.");
-		}
-	}
 
 	/**
 	 * Initialize expensive operations after layout is ready
@@ -436,16 +351,6 @@ export default class DaySprigPlugin extends Plugin {
 			);
 			this.registerView(TASK_LIST_VIEW_TYPE, (leaf) => new TaskListView(leaf, this));
 			this.registerView(NOTES_VIEW_TYPE, (leaf) => new NotesView(leaf, this));
-			this.registerView(AGENDA_VIEW_TYPE, (leaf) => new AgendaView(leaf, this));
-			this.registerView(POMODORO_VIEW_TYPE, (leaf) => new PomodoroView(leaf, this));
-			this.registerView(
-				POMODORO_STATS_VIEW_TYPE,
-				(leaf) => new PomodoroStatsView(leaf, this)
-			);
-			this.registerView(STATS_VIEW_TYPE, (leaf) => new StatsView(leaf, this));
-
-			this.registerView(KANBAN_VIEW_TYPE, (leaf) => new KanbanView(leaf, this));
-
 			this.registerView(
 				RELEASE_NOTES_VIEW_TYPE,
 				(leaf) => new ReleaseNotesView(leaf, this, RELEASE_NOTES_BUNDLE, CURRENT_VERSION)
@@ -490,17 +395,6 @@ export default class DaySprigPlugin extends Plugin {
 			// Defer heavy service initialization until needed
 			this.initializeServicesLazily();
 
-			// Register TaskNotes views with Bases plugin (if enabled and not already registered)
-			if (this.settings?.enableBases && !this.basesRegistered) {
-				try {
-					const { registerBasesTaskList } = await import("./bases/registration");
-					await registerBasesTaskList(this);
-					this.basesRegistered = true;
-				} catch (e) {
-					console.debug("[TaskNotes][Bases] Registration failed:", e);
-				}
-			}
-
 			// Apply the original calendar interaction and reminder layer after
 			// DaySprig has registered its services and views.
 			await this.legacyEnhancements?.start?.();
@@ -516,20 +410,6 @@ export default class DaySprigPlugin extends Plugin {
 		// Use setTimeout to defer initialization to next tick
 		setTimeout(async () => {
 			try {
-				// Initialize Pomodoro service
-				this.pomodoroService = new PomodoroService(this);
-				await this.pomodoroService.initialize();
-
-				// Initialize ICS subscription service (instance already created in onload)
-				await this.icsSubscriptionService.initialize();
-
-				// Initialize auto export service
-				this.autoExportService = new AutoExportService(this);
-				this.autoExportService.start();
-
-				// Initialize HTTP API service if enabled (desktop only)
-				await this.initializeHTTPAPI();
-
 				// Initialize editor services (async imports)
 				const { TaskLinkDetectionService } = await import(
 					"./services/TaskLinkDetectionService"
@@ -702,35 +582,6 @@ export default class DaySprigPlugin extends Plugin {
 			})
 		);
 
-		// Listen for Pomodoro events if Pomodoro service is available
-		if (this.pomodoroService) {
-			// Listen for Pomodoro start events
-			this.registerEvent(
-				this.emitter.on("pomodoro-start", () => {
-					setTimeout(() => {
-						this.statusBarService.requestUpdate();
-					}, 100);
-				})
-			);
-
-			// Listen for Pomodoro stop events
-			this.registerEvent(
-				this.emitter.on("pomodoro-stop", () => {
-					setTimeout(() => {
-						this.statusBarService.requestUpdate();
-					}, 100);
-				})
-			);
-
-			// Listen for Pomodoro state changes
-			this.registerEvent(
-				this.emitter.on("pomodoro-state-changed", () => {
-					setTimeout(() => {
-						this.statusBarService.requestUpdate();
-					}, 100);
-				})
-			);
-		}
 	}
 
 	/**
@@ -1032,15 +883,6 @@ export default class DaySprigPlugin extends Plugin {
 		// Remove the companion before tearing down the cache and calendar views.
 		if (this.legacyEnhancements) this.removeChild(this.legacyEnhancements);
 		this.legacyEnhancements = undefined;
-		// Unregister Bases views
-		if (this.settings?.enableBases) {
-			import("./bases/registration").then(({ unregisterBasesViews }) => {
-				unregisterBasesViews(this);
-				this.basesRegistered = false;
-			}).catch(e => {
-				console.debug("[TaskNotes][Bases] Unregistration failed:", e);
-			});
-		}
 
 		// Clean up performance monitoring
 		const cacheStats = perfMonitor.getStats("cache-initialization");
@@ -1048,10 +890,6 @@ export default class DaySprigPlugin extends Plugin {
 			perfMonitor.logSummary();
 		}
 
-		// Clean up Pomodoro service
-		if (this.pomodoroService) {
-			this.pomodoroService.cleanup();
-		}
 
 		// Clean up FilterService
 		if (this.filterService) {
@@ -1068,15 +906,6 @@ export default class DaySprigPlugin extends Plugin {
 			this.autoArchiveService.stop();
 		}
 
-		// Clean up ICS subscription service
-		if (this.icsSubscriptionService) {
-			this.icsSubscriptionService.destroy();
-		}
-
-		// Clean up auto export service
-		if (this.autoExportService) {
-			this.autoExportService.destroy();
-		}
 
 		// Clean up TaskLinkDetectionService
 		if (this.taskLinkDetectionService) {
@@ -1088,10 +917,6 @@ export default class DaySprigPlugin extends Plugin {
 			this.dragDropManager.destroy();
 		}
 
-		// Stop HTTP API server
-		if (this.apiService) {
-			this.apiService.stop();
-		}
 
 		// Clean up ViewStateManager
 		if (this.viewStateManager) {
@@ -1156,17 +981,6 @@ export default class DaySprigPlugin extends Plugin {
 			delete settingsData.useNativeMetadataCache;
 		}
 
-		// Migration: Add API settings defaults if they don't exist
-		if (settingsData && typeof settingsData.enableAPI === "undefined") {
-			settingsData.enableAPI = false;
-		}
-		if (settingsData && typeof settingsData.apiPort === "undefined") {
-			settingsData.apiPort = 8080;
-		}
-		if (settingsData && typeof settingsData.apiAuthToken === "undefined") {
-			settingsData.apiAuthToken = "";
-		}
-
 		// Deep merge settings with proper migration for nested objects
 		this.settings = {
 			...DEFAULT_SETTINGS,
@@ -1185,11 +999,6 @@ export default class DaySprigPlugin extends Plugin {
 			calendarViewSettings: {
 				...DEFAULT_SETTINGS.calendarViewSettings,
 				...(settingsData?.calendarViewSettings || {}),
-			},
-			// Deep merge ICS integration settings to ensure new fields get default values
-			icsIntegration: {
-				...DEFAULT_SETTINGS.icsIntegration,
-				...(settingsData?.icsIntegration || {}),
 			},
 			// Array handling - maintain existing arrays or use defaults
 			customStatuses: settingsData?.customStatuses || DEFAULT_SETTINGS.customStatuses,
@@ -1234,7 +1043,7 @@ export default class DaySprigPlugin extends Plugin {
 	}
 
 	async saveSettings() {
-		// Load existing plugin data to preserve non-settings data like pomodoroHistory
+		// Load existing plugin data to preserve non-settings data
 		const data = (await this.loadData()) || {};
 		// Merge only settings properties, preserving non-settings data
 		const settingsKeys = Object.keys(DEFAULT_SETTINGS) as (keyof TaskNotesSettings)[];
@@ -1331,41 +1140,6 @@ export default class DaySprigPlugin extends Plugin {
 				},
 			},
 			{
-				id: "open-agenda-view",
-				nameKey: "commands.openAgendaView",
-				callback: async () => {
-					await this.activateAgendaView();
-				},
-			},
-			{
-				id: "open-pomodoro-view",
-				nameKey: "commands.openPomodoroView",
-				callback: async () => {
-					await this.activatePomodoroView();
-				},
-			},
-			{
-				id: "open-kanban-view",
-				nameKey: "commands.openKanbanView",
-				callback: async () => {
-					await this.activateKanbanView();
-				},
-			},
-			{
-				id: "open-pomodoro-stats",
-				nameKey: "commands.openPomodoroStats",
-				callback: async () => {
-					await this.activatePomodoroStatsView();
-				},
-			},
-			{
-				id: "open-statistics",
-				nameKey: "commands.openStatisticsView",
-				callback: async () => {
-					await this.activateStatsView();
-				},
-			},
-			{
 				id: "create-new-task",
 				nameKey: "commands.createNewTask",
 				callback: () => {
@@ -1415,55 +1189,10 @@ export default class DaySprigPlugin extends Plugin {
 				},
 			},
 			{
-				id: "start-pomodoro",
-				nameKey: "commands.startPomodoro",
-				callback: async () => {
-					await this.pomodoroService.startPomodoro();
-				},
-			},
-			{
-				id: "stop-pomodoro",
-				nameKey: "commands.stopPomodoro",
-				callback: async () => {
-					await this.pomodoroService.stopPomodoro();
-				},
-			},
-			{
-				id: "pause-pomodoro",
-				nameKey: "commands.pauseResumePomodoro",
-				callback: async () => {
-					const state = this.pomodoroService.getState();
-					if (state.isRunning) {
-						await this.pomodoroService.pausePomodoro();
-					} else if (state.currentSession) {
-						await this.pomodoroService.resumePomodoro();
-					}
-				},
-			},
-			{
 				id: "refresh-cache",
 				nameKey: "commands.refreshCache",
 				callback: async () => {
 					await this.refreshCache();
-				},
-			},
-			{
-				id: "export-all-tasks-ics",
-				nameKey: "commands.exportAllTasksIcs",
-				callback: async () => {
-					try {
-						const allTasks = await this.cacheManager.getAllTasks();
-						const { CalendarExportService } = await import(
-							"./services/CalendarExportService"
-						);
-						CalendarExportService.downloadAllTasksICSFile(
-							allTasks,
-							this.i18n.translate.bind(this.i18n)
-						);
-					} catch (error) {
-						console.error("Error exporting all tasks as ICS:", error);
-						new Notice(this.i18n.translate("notices.exportTasksFailed"));
-					}
 				},
 			},
 			{
@@ -1590,25 +1319,6 @@ export default class DaySprigPlugin extends Plugin {
 		return this.activateView(NOTES_VIEW_TYPE);
 	}
 
-	async activateAgendaView() {
-		return this.activateView(AGENDA_VIEW_TYPE);
-	}
-
-	async activatePomodoroView() {
-		return this.activateView(POMODORO_VIEW_TYPE);
-	}
-
-	async activatePomodoroStatsView() {
-		return this.activateView(POMODORO_STATS_VIEW_TYPE);
-	}
-
-	async activateStatsView() {
-		return this.activateView(STATS_VIEW_TYPE);
-	}
-
-	async activateKanbanView() {
-		return this.activateView(KANBAN_VIEW_TYPE);
-	}
 
 	async activateReleaseNotesView() {
 		return this.activateView(RELEASE_NOTES_VIEW_TYPE);
@@ -1896,10 +1606,7 @@ export default class DaySprigPlugin extends Plugin {
 			}
 
 			// Get the current active view that has a FilterBar
-			const activeView =
-				this.app.workspace.getActiveViewOfType(TaskListView) ||
-				this.app.workspace.getActiveViewOfType(KanbanView) ||
-				this.app.workspace.getActiveViewOfType(AgendaView);
+			const activeView = this.app.workspace.getActiveViewOfType(TaskListView);
 
 			if (!activeView || !("filterBar" in activeView)) {
 				new Notice("No compatible view active to apply filter");

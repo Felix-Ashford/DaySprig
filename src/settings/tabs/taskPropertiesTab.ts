@@ -647,9 +647,6 @@ function renderFieldMappingTable(
 			translate("settings.taskProperties.fieldMapping.fields.completeInstances"),
 		],
 		["blockedBy", translate("settings.taskProperties.fieldMapping.fields.blockedBy")],
-		["pomodoros", translate("settings.taskProperties.fieldMapping.fields.pomodoros")],
-		["icsEventId", translate("settings.taskProperties.fieldMapping.fields.icsEventId")],
-		["icsEventTag", translate("settings.taskProperties.fieldMapping.fields.icsEventTag")],
 		["reminders", translate("settings.taskProperties.fieldMapping.fields.reminders")],
 	];
 

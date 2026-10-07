@@ -11,13 +11,13 @@ DaySprig is an independently maintained derivative, not an official TaskNotes re
 ## Changes from upstream
 
 - Includes calendar interaction, reminders, a Today list, a daily checklist, and recent files in one plugin.
-- Calendar task clicks toggle completion; double-click edits; right-click cycles priority; Shift-right-click opens the original context menu; Ctrl/Cmd-click opens the task note. The original list-week behavior is retained.
+- Calendar task clicks toggle completion; double-click edits; right-click cycles priority; Shift-right-click deletes the task immediately without confirmation; Ctrl/Cmd-click opens the task note. The original list-week behavior is retained.
 - Invoking the calendar command opens the month view or closes the foreground calendar.
 - Uses DaySprig branding, the daysprig plugin ID, customized default shortcuts and task colors.
 - Stores task notes under \`DaySprig/Tasks\` and archived notes under \`DaySprig/Archive\` by default. Existing task properties such as status, priority, dates, recurrence, and completion records remain supported.
 - Excludes the private dark PDF exporter. Desktop only.
 
-Some TaskNotes upstream modules remain in the code, while their main commands and settings entry points are hidden from the interface. Implementations for Pomodoro, ICS, Kanban, statistics, Bases, time tracking, and API/webhooks have not all been removed; some services or views still initialize, and background behavior depends on plugin settings and existing data. DaySprig is currently a derivative that simplifies the upstream user interface; a full removal of these modules is not complete.
+DaySprig retains the calendar, task notes, reminders, recurring tasks, daily checklist, and recent files. ICS calendar subscriptions and export, HTTP API/webhooks, Pomodoro, standalone statistics, Kanban, the standalone Agenda view, and Bases integration have been removed from the code, service initialization, settings, and dependencies. Task time tracking is retained: starting and stopping a timer records the time spent on a task and its total tracked duration. This is separate from the removed Pomodoro timer.
 
 ## Default shortcuts and colors
 
@@ -43,9 +43,9 @@ Tasks remain ordinary Markdown notes; no task conversion is required. DaySprig u
 
 Version 0.1.0 is intended for initial testing. Manual Obsidian acceptance testing is performed by the maintainer. Automated tests currently cover a small set of data helpers; they do not establish visual or end-to-end parity. The declared minimum Obsidian version (1.5.0) still requires manual compatibility confirmation before a stable release or community submission.
 
-## Data and optional integrations
+## Local data
 
-Settings and checklist/reminder state are stored locally in the plugin's data.json; tasks are stored in vault notes. The API and automatic ICS export are disabled by default, but the upstream ICS subscription, export, and HTTP API/webhook implementations remain, with their main settings entry points hidden. Existing configuration may still enable background work for these integrations. Remote subscriptions and webhooks can send requests to configured services. Do not publish your data.json, credentials, or personal vault content.
+Settings and checklist/reminder state are stored locally in the plugin's data.json; tasks and time entries are stored in vault notes. Removed ICS, API, and webhook settings are no longer read or executed. Do not publish your data.json or personal vault content.
 
 ## Development and releases
 
@@ -60,7 +60,7 @@ Production builds derive third-party notices from esbuild's actual bundle inputs
 
     npm run release:package
 
-This creates dist/daysprig with the three installable files plus license/source notices, and an ical.js source archive under dist. GitHub tag releases run the same checks and create a draft prerelease. Publish only after manual acceptance testing. Tag names must match manifest.json, package.json and versions.json (for example 0.1.0, without a v prefix).
+This creates dist/daysprig with the three installable files and license notices. GitHub tag releases run the same checks and create a draft prerelease. Publish only after manual acceptance testing. Tag names must match manifest.json, package.json and versions.json (for example 0.1.0, without a v prefix).
 
 Set OBSIDIAN_PLUGIN_PATH or the ignored .copy-files.local file to a test vault's daysprig plugin directory before using npm run dev. The script rejects destinations named tasknotes.
 
@@ -68,4 +68,4 @@ Set OBSIDIAN_PLUGIN_PATH or the ignored .copy-files.local file to a test vault's
 
 DaySprig modifications are Copyright 2026 Felix-Ashford. The TaskNotes baseline is Copyright 2025 Callum Alpass. Both are provided under the [MIT license](LICENSE); see [NOTICE.md](NOTICE.md) for provenance.
 
-Bundled dependencies retain their own terms in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). In particular, ical.js is MPL-2.0 and reflect-metadata is Apache-2.0; the DaySprig MIT license does not replace those terms. MPL source availability is documented in [THIRD-PARTY-SOURCE.md](THIRD-PARTY-SOURCE.md), and the corresponding unmodified ical.js source is included with release materials.
+Bundled dependencies retain their own terms in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

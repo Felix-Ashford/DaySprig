@@ -17,7 +17,6 @@ Copyright 2026 Felix-Ashford。不要把整个项目称为从零原创。
 
 依赖并非全部是 MIT。THIRD-PARTY-NOTICES.md 从实际构建内容生成，
 包括完整的 MIT、BSD、ISC、Apache-2.0、MPL-2.0 等许可文本和声明。
-其中 ical.js 对应源码由发布流程自动打包，随发行材料提供。
 声明也嵌入 main.js，用户只复制安装文件仍能保留版权信息。
 
 ## 可复现构建
@@ -37,8 +36,7 @@ src/releaseNotes.ts 是需要提交的源文件。
 ## 发布材料
 
 上传 main.js、manifest.json、styles.css、LICENSE、NOTICE.md、
-THIRD-PARTY-NOTICES.md、THIRD-PARTY-SOURCE.md，以及自动生成的
-ical.js 对应源码压缩包。GitHub Actions 会建立草稿预发布版本；
+THIRD-PARTY-NOTICES.md。GitHub Actions 会建立草稿预发布版本；
 维护者在 Obsidian 验收后决定是否公开该版本。
 
 只上传 daysprig 仓库目录，不上传其父目录。
@@ -52,5 +50,5 @@ ical.js 对应源码压缩包。GitHub Actions 会建立草稿预发布版本；
 声明的最低 Obsidian 版本 1.5.0 尚需实测，再用于稳定版和社区申请。
 
 DaySprig 使用自己的视图 ID 和数据键，只读取自己的设置和插件数据。
-所有数据仍在本地笔记和插件配置内；可选 ICS、API、webhooks 行为见 README。
+任务和计时记录保存在本地笔记中；已移除 ICS 订阅/导出、HTTP API 和 Webhook 功能。
 GitHub 仓库目前为私有，公开仓库和发布操作需要维护者单独进行。

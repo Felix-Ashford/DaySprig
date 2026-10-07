@@ -5,7 +5,6 @@ import {
 	TaskDependency,
 	TaskInfo,
 	TimeEntry,
-	IWebhookNotifier,
 } from "../types";
 import { AutoArchiveService } from "./AutoArchiveService";
 import {
@@ -45,7 +44,6 @@ import TaskNotesPlugin from "../main";
 import { TranslationKey } from "../i18n";
 
 export class TaskService {
-	private webhookNotifier?: IWebhookNotifier;
 	private autoArchiveService?: AutoArchiveService;
 
 	constructor(private plugin: TaskNotesPlugin) {}
@@ -93,13 +91,6 @@ export class TaskService {
 		}
 	}
 
-	/**
-	 * Set webhook notifier for triggering webhook events
-	 * Called after HTTPAPIService is initialized to avoid circular dependencies
-	 */
-	setWebhookNotifier(notifier: IWebhookNotifier): void {
-		this.webhookNotifier = notifier;
-	}
 
 	/**
 	 * Set auto-archive service for handling automatic archiving
@@ -381,13 +372,6 @@ export class TaskService {
 			};
 			setTimeout(() => this.plugin.emitter.trigger(EVENT_TASK_UPDATED, taskUpdatedEvent), 0);
 
-			// Trigger webhooks in the background so they cannot block the modal close.
-			if (this.webhookNotifier) {
-				void this.webhookNotifier
-					.triggerWebhook("task.created", { task: taskInfo })
-					.catch((error) => console.warn("Failed to trigger webhook for task creation:", error));
-			}
-
 			return { file, taskInfo };
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
@@ -630,31 +614,6 @@ export class TaskService {
 				// Event emission errors shouldn't break the operation
 			}
 
-			// Trigger webhooks for property updates
-			if (this.webhookNotifier) {
-				try {
-					// Check if this was a completion
-					const wasCompleted = this.plugin.statusManager.isCompletedStatus(task.status);
-					const isCompleted =
-						property === "status" && this.plugin.statusManager.isCompletedStatus(value);
-
-					if (property === "status" && !wasCompleted && isCompleted) {
-						// Task was completed
-						await this.webhookNotifier.triggerWebhook("task.completed", {
-							task: updatedTask as TaskInfo,
-						});
-					} else {
-						// Regular property update
-						await this.webhookNotifier.triggerWebhook("task.updated", {
-							task: updatedTask as TaskInfo,
-							previous: task,
-						});
-					}
-				} catch (error) {
-					console.warn("Failed to trigger webhook for property update:", error);
-				}
-			}
-
 			// Handle auto-archive if status property changed
 			if (this.autoArchiveService && property === "status" && value !== task.status) {
 				try {
@@ -863,23 +822,6 @@ export class TaskService {
 			updatedTask: updatedTask,
 		});
 
-		// Trigger webhook for archive/unarchive
-		if (this.webhookNotifier) {
-			try {
-				if (updatedTask.archived) {
-					await this.webhookNotifier.triggerWebhook("task.archived", {
-						task: updatedTask,
-					});
-				} else {
-					await this.webhookNotifier.triggerWebhook("task.unarchived", {
-						task: updatedTask,
-					});
-				}
-			} catch (error) {
-				console.warn("Failed to trigger webhook for task archive/unarchive:", error);
-			}
-		}
-
 		// Step 5: Return authoritative data
 		return updatedTask;
 	}
@@ -946,18 +888,6 @@ export class TaskService {
 			originalTask: task,
 			updatedTask: updatedTask,
 		});
-
-		// Trigger webhook for time tracking start
-		if (this.webhookNotifier) {
-			try {
-				await this.webhookNotifier.triggerWebhook("time.started", {
-					task: updatedTask,
-					session: updatedTask.timeEntries?.[updatedTask.timeEntries.length - 1],
-				});
-			} catch (error) {
-				console.warn("Failed to trigger webhook for time tracking start:", error);
-			}
-		}
 
 		// Step 5: Return authoritative data
 		return updatedTask;
@@ -1032,18 +962,6 @@ export class TaskService {
 			originalTask: task,
 			updatedTask: updatedTask,
 		});
-
-		// Trigger webhook for time tracking stop
-		if (this.webhookNotifier) {
-			try {
-				await this.webhookNotifier.triggerWebhook("time.stopped", {
-					task: updatedTask,
-					session: updatedTask.timeEntries?.[updatedTask.timeEntries.length - 1],
-				});
-			} catch (error) {
-				console.warn("Failed to trigger webhook for time tracking stop:", error);
-			}
-		}
 
 		// Step 5: Return authoritative data
 		return updatedTask;
@@ -1342,34 +1260,6 @@ export class TaskService {
 				// Event emission errors shouldn't break the operation
 			}
 
-			// Trigger webhooks for task update/completion
-			if (this.webhookNotifier) {
-				try {
-					// Check if this was a completion
-					const wasCompleted = this.plugin.statusManager.isCompletedStatus(
-						originalTask.status
-					);
-					const isCompleted = this.plugin.statusManager.isCompletedStatus(
-						updatedTask.status
-					);
-
-					if (!wasCompleted && isCompleted) {
-						// Task was completed
-						await this.webhookNotifier.triggerWebhook("task.completed", {
-							task: updatedTask,
-						});
-					} else {
-						// Regular update
-						await this.webhookNotifier.triggerWebhook("task.updated", {
-							task: updatedTask,
-							previous: originalTask,
-						});
-					}
-				} catch (error) {
-					console.warn("Failed to trigger webhook for task update:", error);
-				}
-			}
-
 			// Handle auto-archive if status changed
 			if (
 				this.autoArchiveService &&
@@ -1545,14 +1435,6 @@ export class TaskService {
 				deletedTask: task,
 			});
 
-			// Trigger webhook for task deletion
-			if (this.webhookNotifier) {
-				try {
-					await this.webhookNotifier.triggerWebhook("task.deleted", { task });
-				} catch (error) {
-					console.warn("Failed to trigger webhook for task deletion:", error);
-				}
-			}
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			// eslint-disable-next-line no-console
@@ -1715,20 +1597,7 @@ export class TaskService {
 			updatedTask: updatedTask,
 		});
 
-		// Step 5: Trigger webhook for recurring task completion
-		if (newComplete && this.webhookNotifier) {
-			try {
-				await this.webhookNotifier.triggerWebhook("recurring.instance.completed", {
-					task: updatedTask,
-					date: dateStr,
-					targetDate: targetDate,
-				});
-			} catch (webhookError) {
-				console.error("Error triggering recurring task completion webhook:", webhookError);
-			}
-		}
-
-		// Step 6: Return authoritative data
+		// Step 5: Return authoritative data
 		return updatedTask;
 	}
 

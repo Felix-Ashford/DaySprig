@@ -36,8 +36,6 @@ jobs:
             dist/daysprig/LICENSE
             dist/daysprig/NOTICE.md
             dist/daysprig/THIRD-PARTY-NOTICES.md
-            dist/daysprig/THIRD-PARTY-SOURCE.md
-            dist/ical.js-*-source.tar.gz
           fail_on_unmatched_files: true
           draft: true
           prerelease: true

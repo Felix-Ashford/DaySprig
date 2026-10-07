@@ -11,13 +11,13 @@ DaySprig 是由独立维护者维护的衍生项目，并非官方 TaskNotes 发
 ## 相比上游项目的变化
 
 - 将日历交互、提醒、今日列表、每日清单和最近文件整合到同一个插件中。
-- 在日历中单击任务可切换完成状态，双击可编辑，右键可循环切换重要度，按住 Shift 右键可打开原始右键菜单，按住 Ctrl/Cmd 单击可打开任务笔记。原有的列表周视图行为仍然保留。
+- 在日历中单击任务可切换完成状态，双击可编辑，右键可循环切换重要度，按住 Shift 右键可直接删除任务且无需确认，按住 Ctrl/Cmd 单击可打开任务笔记。原有的列表周视图行为仍然保留。
 - 执行日历命令会打开月视图；如果日历已经位于前台，则会关闭日历。
 - 使用 DaySprig 品牌、daysprig 插件 ID、自定义默认快捷键和任务颜色。
 - 默认将任务笔记存储在 `DaySprig/Tasks`，将归档笔记存储在 `DaySprig/Archive`。任务状态、重要度、日期、重复规则和完成记录等已有任务属性仍然支持。
 - 不包含私有的深色 PDF 导出器。仅支持桌面端。
 
-部分 TaskNotes 上游模块仍保留在代码中，但其主要命令和设置入口已从界面隐藏。番茄钟、ICS、看板、统计、Bases、时间追踪及 API/Webhook 相关实现尚未全部移除；其中某些服务或视图仍会初始化，具体后台行为取决于插件设置和已有数据。DaySprig 当前是基于上游项目精简用户界面的衍生版本，尚未完成对这些模块的彻底清理。
+DaySprig 保留日历、任务笔记、提醒、重复任务、每日清单和最近文件等当前产品功能。ICS 日历订阅与导出、HTTP API/Webhook、番茄钟、独立统计视图、看板、独立 Agenda 视图和 Bases 集成已完成代码清理，对应的服务初始化、设置和依赖也已移除。任务计时仍保留：开始和停止计时会记录任务实际投入的时间及累计用时，这与已移除的番茄钟功能不同。
 
 ## 默认快捷键和颜色
 
@@ -43,9 +43,9 @@ DaySprig 使用自己的视图标识符和数据键。应当将它设置为当�
 
 0.1.0 版本用于初始测试。维护者会进行 Obsidian 手动验收测试。当前自动化测试只覆盖少量数据辅助函数，不能代表完整的界面或端到端兼容性。声明的最低 Obsidian 版本为 1.5.0；在正式发布或提交到社区之前，仍需要手动确认兼容性。
 
-## 数据与可选集成
+## 本地数据
 
-设置以及清单、提醒状态保存在插件的 `data.json` 中；任务保存在 vault 笔记中。API 和自动 ICS 导出默认关闭，但上游 ICS 订阅、导出及 HTTP API/Webhook 的实现仍保留，且主要设置入口已隐藏。若已有配置启用了 ICS 订阅或其他集成功能，插件仍可能执行相应的后台操作；启用远程订阅或 Webhook 时，可能会向配置的服务发送请求。请勿公开你的 `data.json`、凭据或个人 vault 内容。
+设置以及清单、提醒状态保存在插件的 `data.json` 中；任务和时间记录保存在 vault 笔记中。移除的 ICS、API 和 Webhook 设置不会再被读取或执行。请勿公开你的 `data.json` 或个人 vault 内容。
 
 ## 开发与发布
 
@@ -60,7 +60,7 @@ DaySprig 使用自己的视图标识符和数据键。应当将它设置为当�
 
     npm run release:package
 
-该命令会创建 `dist/daysprig`，其中包含三个可安装文件、许可证/源码声明，以及 `ical.js` 源码归档。GitHub 标签发布会执行相同的检查并创建草稿预发布版本。请在手动验收测试完成后再发布。标签名称必须与 `manifest.json`、`package.json` 和 `versions.json` 保持一致（例如 `0.1.0`，不带 `v` 前缀）。
+该命令会创建 `dist/daysprig`，其中包含三个可安装文件和许可证声明。GitHub 标签发布会执行相同的检查并创建草稿预发布版本。请在手动验收测试完成后再发布。标签名称必须与 `manifest.json`、`package.json` 和 `versions.json` 保持一致（例如 `0.1.0`，不带 `v` 前缀）。
 
 在运行 `npm run dev` 前，将 `OBSIDIAN_PLUGIN_PATH` 设置为测试 vault 中的 daysprig 插件目录，或使用被 Git 忽略的 `.copy-files.local` 文件配置。该脚本会拒绝目标目录名称为 tasknotes 的路径。
 
@@ -68,4 +68,4 @@ DaySprig 使用自己的视图标识符和数据键。应当将它设置为当�
 
 DaySprig 修改部分的版权归 Felix-Ashford 所有（2026 年）。TaskNotes 基础代码的版权归 Callum Alpass 所有（2025 年）。两者均以 [MIT 许可证](LICENSE)发布；项目来源说明见 [NOTICE.md](NOTICE.md)。
 
-捆绑的依赖保留各自的许可证条款，详见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。其中，`ical.js` 使用 MPL-2.0，`reflect-metadata` 使用 Apache-2.0；DaySprig 的 MIT 许可证不会取代这些条款。MPL 源码可用性记录在 [THIRD-PARTY-SOURCE.md](THIRD-PARTY-SOURCE.md) 中，相应的未修改 `ical.js` 源码也包含在发布材料中。
+捆绑的依赖保留各自的许可证条款，详见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。

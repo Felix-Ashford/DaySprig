@@ -9,7 +9,7 @@ const versions = readJson("versions.json");
 if (manifest.id !== "daysprig" || manifest.name !== "DaySprig" || !manifest.isDesktopOnly) throw new Error("Invalid DaySprig manifest");
 if (pkg.version !== manifest.version || versions[manifest.version] !== manifest.minAppVersion) throw new Error("Release version metadata differs");
 if (process.env.RELEASE_TAG && process.env.RELEASE_TAG !== manifest.version) throw new Error("Tag must match manifest version without a v prefix");
-for (const file of ["main.js", "manifest.json", "styles.css", "LICENSE", "NOTICE.md", "THIRD-PARTY-NOTICES.md", "THIRD-PARTY-SOURCE.md"]) {
+for (const file of ["main.js", "manifest.json", "styles.css", "LICENSE", "NOTICE.md", "THIRD-PARTY-NOTICES.md"]) {
   if (!statSync(file).size) throw new Error("Empty artifact: " + file);
 }
 const main = readFileSync("main.js", "utf8");

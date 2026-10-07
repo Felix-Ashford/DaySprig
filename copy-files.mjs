@@ -9,7 +9,7 @@ if (!destination) {
 if (!destination) throw new Error("Set OBSIDIAN_PLUGIN_PATH or .copy-files.local to a test vault's daysprig plugin directory.");
 const target = resolve(destination);
 if (basename(target).toLowerCase() !== "daysprig") throw new Error("Copy destination must be named daysprig; refusing to overwrite another plugin.");
-const files = ["main.js", "manifest.json", "styles.css", "LICENSE", "NOTICE.md", "THIRD-PARTY-NOTICES.md", "THIRD-PARTY-SOURCE.md"];
+const files = ["main.js", "manifest.json", "styles.css", "LICENSE", "NOTICE.md", "THIRD-PARTY-NOTICES.md"];
 for (const file of files) await access(file);
 await mkdir(target, { recursive: true });
 for (const file of files) await copyFile(file, join(target, file));

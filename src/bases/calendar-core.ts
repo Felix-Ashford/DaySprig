@@ -3,13 +3,13 @@
  *
  * This module contains shared calendar event generation logic used by both:
  * - AdvancedCalendarView (ItemView)
- * - TaskNotes Calendar Bases View (Bases integration)
+ * - AdvancedCalendarView
  */
 
 import { format } from "date-fns";
 import { TFile } from "obsidian";
 import TaskNotesPlugin from "../main";
-import { TaskInfo, ICSEvent, TimeBlock } from "../types";
+import { TaskInfo, TimeBlock } from "../types";
 import {
 	hasTimeComponent,
 	getDatePart,
@@ -31,9 +31,8 @@ export interface CalendarEvent {
 	editable?: boolean;
 	extendedProps: {
 		taskInfo?: TaskInfo;
-		icsEvent?: ICSEvent;
 		timeblock?: TimeBlock;
-		eventType: "scheduled" | "due" | "timeEntry" | "recurring" | "ics" | "timeblock" | "property-based";
+		eventType: "scheduled" | "due" | "timeEntry" | "recurring" | "timeblock" | "property-based";
 		filePath?: string; // For property-based events
 		file?: any; // For property-based events
 		basesEntry?: any; // For property-based events - full Bases entry with getValue()
@@ -54,7 +53,6 @@ export interface CalendarEventGenerationOptions {
 	showDue?: boolean;
 	showTimeEntries?: boolean;
 	showRecurring?: boolean;
-	showICSEvents?: boolean;
 	showTimeblocks?: boolean;
 	visibleStart?: Date;
 	visibleEnd?: Date;
@@ -451,44 +449,6 @@ export function createTimeEntryEvents(task: TaskInfo, plugin: TaskNotesPlugin): 
 }
 
 /**
- * Create ICS calendar event
- */
-export function createICSEvent(icsEvent: ICSEvent, plugin: TaskNotesPlugin): CalendarEvent | null {
-	try {
-		const subscription = plugin.icsSubscriptionService
-			?.getSubscriptions()
-			.find((sub) => sub.id === icsEvent.subscriptionId);
-
-		if (!subscription || !subscription.enabled) {
-			return null;
-		}
-
-		const backgroundColor = hexToRgba(subscription.color, 0.2);
-		const borderColor = subscription.color;
-
-		return {
-			id: icsEvent.id,
-			title: icsEvent.title,
-			start: icsEvent.start,
-			end: icsEvent.end,
-			allDay: icsEvent.allDay,
-			backgroundColor: backgroundColor,
-			borderColor: borderColor,
-			textColor: borderColor,
-			editable: false,
-			extendedProps: {
-				icsEvent: icsEvent,
-				eventType: "ics",
-				subscriptionName: subscription.name,
-			},
-		};
-	} catch (error) {
-		console.error("Error creating ICS event:", error);
-		return null;
-	}
-}
-
-/**
  * Get recurring time from task recurrence rule
  */
 export function getRecurringTime(task: TaskInfo): string {
@@ -752,7 +712,6 @@ export async function generateCalendarEvents(
 		showDue = true,
 		showTimeEntries = true,
 		showRecurring = true,
-		showICSEvents = true,
 		showTimeblocks = false,
 		visibleStart,
 		visibleEnd,
@@ -798,18 +757,6 @@ export async function generateCalendarEvents(
 			events.push(...timeEvents);
 		}
 	}
-
-	// Add ICS events
-	if (showICSEvents && plugin.icsSubscriptionService) {
-		const icsEvents = plugin.icsSubscriptionService.getAllEvents();
-		for (const icsEvent of icsEvents) {
-			const calendarEvent = createICSEvent(icsEvent, plugin);
-			if (calendarEvent) {
-				events.push(calendarEvent);
-			}
-		}
-	}
-
 	// Add timeblock events
 	if (showTimeblocks && visibleStart && visibleEnd) {
 		const timeblockEvents = await generateTimeblockEvents(plugin, visibleStart, visibleEnd);

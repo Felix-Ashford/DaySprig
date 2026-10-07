@@ -27,7 +27,7 @@ export function generateNotices(metafile) {
     const upstream = typeof meta.repository === "string" ? meta.repository : meta.repository?.url;
     return ["## " + meta.name + " " + meta.version, "", "License: " + meta.license, ...(upstream ? ["", "Upstream: " + upstream] : []), "", sections.join(newline + newline)].join(newline);
   }).sort((a, b) => a.localeCompare(b, "en"));
-  const text = ["# Third-Party Notices", "", "Generated from packages contributing code to the DaySprig bundle.", "Development tools and Obsidian-provided external modules are not redistributed by this bundle.", "Each component retains its own license; the DaySprig MIT license does not replace those terms.", "For MPL-2.0 source availability, see THIRD-PARTY-SOURCE.md and the source archive accompanying releases.", "", packages.join(newline + newline + "---" + newline + newline), ""].join(newline);
+  const text = ["# Third-Party Notices", "", "Generated from packages contributing code to the DaySprig bundle.", "Development tools and Obsidian-provided external modules are not redistributed by this bundle.", "Each component retains its own license; the DaySprig MIT license does not replace those terms.", "", packages.join(newline + newline + "---" + newline + newline), ""].join(newline);
   writeFileSync(join(root, "THIRD-PARTY-NOTICES.md"), text);
   console.log("Collected full license texts for " + packages.length + " bundled packages");
   return text;

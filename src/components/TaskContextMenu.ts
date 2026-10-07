@@ -3,7 +3,6 @@ import TaskNotesPlugin from "../main";
 import { TaskDependency, TaskInfo } from "../types";
 import { formatDateForStorage } from "../utils/dateUtils";
 import { ReminderModal } from "../modals/ReminderModal";
-import { CalendarExportService } from "../services/CalendarExportService";
 import { DateContextMenu } from "./DateContextMenu";
 import { RecurrenceContextMenu } from "./RecurrenceContextMenu";
 import { TaskSelectorModal } from "../modals/TaskSelectorModal";
@@ -353,75 +352,6 @@ export class TaskContextMenu {
 					});
 				});
 			}
-		});
-
-		this.menu.addSeparator();
-
-		// Add to Calendar submenu
-		this.menu.addItem((item) => {
-			item.setTitle(this.t("contextMenus.task.addToCalendar"));
-			item.setIcon("calendar-plus");
-
-			const submenu = (item as any).setSubmenu();
-
-			// Google Calendar
-			submenu.addItem((subItem: any) => {
-				subItem.setTitle(this.t("contextMenus.task.calendar.google"));
-				subItem.setIcon("external-link");
-				subItem.onClick(() => {
-					CalendarExportService.openCalendarURL(
-						{
-							type: "google",
-							task: task,
-							useScheduledAsDue: true,
-						},
-						this.t.bind(this)
-					);
-				});
-			});
-
-			// Outlook Calendar
-			submenu.addItem((subItem: any) => {
-				subItem.setTitle(this.t("contextMenus.task.calendar.outlook"));
-				subItem.setIcon("external-link");
-				subItem.onClick(() => {
-					CalendarExportService.openCalendarURL(
-						{
-							type: "outlook",
-							task: task,
-							useScheduledAsDue: true,
-						},
-						this.t.bind(this)
-					);
-				});
-			});
-
-			// Yahoo Calendar
-			submenu.addItem((subItem: any) => {
-				subItem.setTitle(this.t("contextMenus.task.calendar.yahoo"));
-				subItem.setIcon("external-link");
-				subItem.onClick(() => {
-					CalendarExportService.openCalendarURL(
-						{
-							type: "yahoo",
-							task: task,
-							useScheduledAsDue: true,
-						},
-						this.t.bind(this)
-					);
-				});
-			});
-
-			submenu.addSeparator();
-
-			// Download ICS file
-			submenu.addItem((subItem: any) => {
-				subItem.setTitle(this.t("contextMenus.task.calendar.downloadIcs"));
-				subItem.setIcon("download");
-				subItem.onClick(() => {
-					CalendarExportService.downloadICSFile(task, this.t.bind(this));
-				});
-			});
 		});
 
 		this.menu.addSeparator();

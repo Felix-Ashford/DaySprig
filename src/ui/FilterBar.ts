@@ -23,7 +23,6 @@ import {
 	SavedView,
 	TaskGroupKey,
 	TaskSortKey,
-	KANBAN_VIEW_TYPE,
 } from "../types";
 
 import { DragDropHandler } from "./DragDropHandler";
@@ -160,11 +159,6 @@ export class FilterBar extends EventEmitter {
 	 * Get default group key based on view type
 	 */
 	private getDefaultGroupKey(): TaskGroupKey {
-		// Kanban view should default to status grouping for better UX
-		if (this.viewType === KANBAN_VIEW_TYPE) {
-			return "status";
-		}
-		// Other views default to no grouping
 		return "none";
 	}
 	private translate: (key: TranslationKey, vars?: Record<string, string>) => string;

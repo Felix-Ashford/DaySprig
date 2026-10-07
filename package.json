@@ -68,11 +68,8 @@
 		"@fullcalendar/timegrid": "^6.1.17",
 		"chrono-node": "^2.7.5",
 		"date-fns": "^4.1.0",
-		"ical.js": "^2.2.1",
 		"obsidian-daily-notes-interface": "^0.9.4",
-		"reflect-metadata": "^0.2.2",
 		"rrule": "^2.8.1",
 		"yaml": "^2.3.1"
 	}
 }
-

@@ -3,7 +3,6 @@ import {
 	TaskNotesSettings,
 	TaskCreationDefaults,
 	CalendarViewSettings,
-	ICSIntegrationSettings,
 	ProjectAutosuggestSettings,
 } from "../types/settings";
 
@@ -144,7 +143,6 @@ export const DEFAULT_CALENDAR_VIEW_SETTINGS: CalendarViewSettings = {
 	defaultShowDueWhenScheduled: true,
 	defaultShowTimeEntries: false,
 	defaultShowRecurring: true,
-	defaultShowICSEvents: true,
 	// Timeblocking settings
 	enableTimeblocking: false, // Disabled by default - toggleable feature
 	defaultShowTimeblocks: true,
@@ -156,17 +154,6 @@ export const DEFAULT_CALENDAR_VIEW_SETTINGS: CalendarViewSettings = {
 	showTodayHighlight: true,
 	// Event display
 	eventMinHeight: 15, // FullCalendar default
-};
-
-export const DEFAULT_ICS_INTEGRATION_SETTINGS: ICSIntegrationSettings = {
-	defaultNoteTemplate: "",
-	defaultNoteFolder: "",
-	icsNoteFilenameFormat: "title", // Default to using the event title for ICS notes
-	customICSNoteFilenameTemplate: "{title}", // Simple title template for ICS notes
-	// Automatic export defaults
-	enableAutoExport: false,
-	autoExportPath: "daysprig-calendar.ics",
-	autoExportInterval: 60, // 60 minutes by default
 };
 
 export const DEFAULT_PROJECT_AUTOSUGGEST: ProjectAutosuggestSettings = {
@@ -202,17 +189,6 @@ export const DEFAULT_SETTINGS: TaskNotesSettings = {
 	calendarViewSettings: DEFAULT_CALENDAR_VIEW_SETTINGS,
 	openDailyNoteOnDateClick: true,
 	dailyNoteFolder: "",
-	// Pomodoro defaults
-	pomodoroWorkDuration: 25,
-	pomodoroShortBreakDuration: 5,
-	pomodoroLongBreakDuration: 15,
-	pomodoroLongBreakInterval: 4,
-	pomodoroAutoStartBreaks: true,
-	pomodoroAutoStartWork: false,
-	pomodoroNotifications: true,
-	pomodoroSoundEnabled: true,
-	pomodoroSoundVolume: 50,
-	pomodoroStorageLocation: "plugin",
 	// Editor defaults
 	enableTaskLinkOverlay: true,
 	enableInstantTaskConvert: true,
@@ -260,19 +236,11 @@ export const DEFAULT_SETTINGS: TaskNotesSettings = {
 	viewsButtonAlignment: "right",
 	// Overdue behavior defaults
 	hideCompletedFromOverdue: true,
-	// ICS integration defaults
-	icsIntegration: DEFAULT_ICS_INTEGRATION_SETTINGS,
 	// Saved filter views defaults
 	savedViews: [],
 	// Notification defaults
 	enableNotifications: true,
 	notificationType: "system",
-	// HTTP API defaults
-	enableAPI: false,
-	apiPort: 8080,
-	apiAuthToken: "",
-	// Webhook defaults
-	webhooks: [],
 	// User Fields defaults (multiple)
 	userFields: [],
 	// Default visible properties for task cards
@@ -287,8 +255,6 @@ export const DEFAULT_SETTINGS: TaskNotesSettings = {
 		"blocked", // Blocked indicator
 		"blocking", // Blocking indicator
 	],
-	// Bases integration defaults
-	enableBases: true,
 	// Recurring task behavior defaults
 	maintainDueDateOffsetInRecurring: false,
 	// Frontmatter link format defaults
