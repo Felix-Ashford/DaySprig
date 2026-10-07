@@ -1,6 +1,6 @@
 # DaySprig
 
-[English](README.md) | 简体中文
+[English](README.md#english-version) | 简体中文
 
 DaySprig 是一款适用于 Obsidian 的独立桌面任务日历插件，提供专注的日历、任务笔记、提醒、每日清单和最近文件功能。它不需要 TaskNotes。
 
