@@ -1,71 +1,80 @@
-# DaySprig
+﻿# DaySprig
 
-简体中文 | [English](README.en.md)
+DaySprig 是一款面向 Obsidian 的桌面任务日历插件，默认使用中文界面。它把日历、任务笔记、提醒、每日清单和最近文件集中在一个轻量工作流中，不需要安装 TaskNotes。
 
-DaySprig 是一款适用于 Obsidian 的独立桌面任务日历插件，提供专注的日历、任务笔记、提醒、每日清单和最近文件功能。它不需要 TaskNotes。
+[English](README.en.md)
 
-维护者：[Felix-Ashford](https://github.com/Felix-Ashford)。[报告问题](https://github.com/Felix-Ashford/DaySprig/issues)。
+## 界面预览
 
-DaySprig 是由独立维护者维护的衍生项目，并非官方 TaskNotes 发布版本。项目基础来自 TaskNotes 3.25.4 标签，对应提交为 [741ce165c9ee95b23a613d0edcd4bc842ee45979](https://github.com/callumalpass/tasknotes/tree/741ce165c9ee95b23a613d0edcd4bc842ee45979)，作者为 Callum Alpass。大部分核心任务管理功能源自上游项目。
+### 日历与任务编辑
 
-## 相比上游项目的变化
+日历是 DaySprig 的主界面。任务按日期显示，颜色对应任务重要度；双击任务打开编辑窗口，左键空白日期可按设置决定是否创建当天笔记。
 
-- 将日历交互、提醒、今日列表、每日清单和最近文件整合到同一个插件中。
-- 在日历中单击任务可切换完成状态，双击可编辑，右键可循环切换重要度，按住 Shift 右键可直接删除任务且无需确认，按住 Ctrl/Cmd 单击可打开任务笔记。原有的列表周视图行为仍然保留。
-- 执行日历命令会打开月视图；如果日历已经位于前台，则会关闭日历。
-- 使用 DaySprig 品牌、daysprig 插件 ID、自定义默认快捷键和任务颜色。
-- 默认将任务笔记存储在 `DaySprig/Tasks`，将归档笔记存储在 `DaySprig/Archive`。任务状态、重要度、日期、重复规则和完成记录等已有任务属性仍然支持。
-- 不包含私有的深色 PDF 导出器。仅支持桌面端。
+![DaySprig 中文日历界面](docs/readme-images/calendar-zh.png)
 
-DaySprig 保留日历、任务笔记、提醒、重复任务、每日清单和最近文件等当前产品功能。ICS 日历订阅与导出、HTTP API/Webhook、番茄钟、独立统计视图、看板、独立 Agenda 视图和 Bases 集成已完成代码清理，对应的服务初始化、设置和依赖也已移除。任务计时仍保留：开始和停止计时会记录任务实际投入的时间及累计用时，这与已移除的番茄钟功能不同。
+创建和编辑任务使用同一种文本框：第一行是任务名称，后续内容是详情。按 Enter 保存；保存后再次按 Enter，可以在同一天继续创建下一项任务。编辑窗口会原样显示此前保存的内容。
 
-## 默认快捷键和颜色
+![DaySprig 中文任务编辑界面](docs/readme-images/task-editor-zh.png)
+
+### 今日清单、最近文件与设置
+
+Ctrl/Cmd+Shift+D 打开今日任务清单，按过期、今日计划、今日截止和已完成分组。Ctrl/Cmd+Shift+Q 打开最近文件和常用文件，支持搜索、排序、重命名、复制内部链接和移入回收站。设置中可以选择界面语言、任务和归档目录、日历行为、重要度颜色及保留的快捷键。
+
+![DaySprig 中文伴生窗口](docs/readme-images/companion-zh.png)
+
+![DaySprig 设置界面](docs/readme-images/settings-zh.png)
+
+DaySprig 也可以配合 Obsidian 主题使用：
+
+![DaySprig 搭配 Obsidian Nord 外观](docs/readme-images/nord-calendar.png)
+
+![DaySprig Nord 外观下的任务编辑](docs/readme-images/nord-task-editor.png)
+
+![DaySprig Nord 外观下的伴生窗口](docs/readme-images/nord-companion.png)
+
+## 主要功能
+
+- 月视图日历：查看计划日期、截止日期、循环任务和任务重要度。
+- 任务操作：左键切换完成状态，双击编辑，右键循环切换重要度，Shift+右键直接删除且不再确认；Ctrl/Cmd+左键在新标签页打开任务笔记。
+- 创建任务：日历中单击日期（如果在设置中开启）即可创建当天笔记；创建窗口支持标题、详情和重要度调整。
+- 连续创建：创建任务按 Enter 保存后，回到日历再次按 Enter 可在同一天打开新的创建窗口。
+- 编辑任务：编辑窗口按 Enter 保存，不会误触发连续创建；任务内容以普通文本原样编辑。
+- 提醒：高重要度或过期任务支持推迟日期、完成任务和浮窗提示。
+- 今日任务清单和最近文件窗口支持语言切换时即时刷新。
+- 支持中文、English、Français、Deutsch、Español、日本語和 Русский。
+- 默认任务目录为 DaySprig/Tasks，归档目录为 DaySprig/Archive，均可在设置中调整。
+
+ICS 订阅与导出、HTTP API/Webhook、Pomodoro、独立统计、看板、独立 Agenda 视图、Bases 集成和时间追踪已从当前工作流中移除。
+
+## 默认快捷键
 
 | 操作 | Windows/Linux | macOS |
 | --- | --- | --- |
 | 打开/切换 DaySprig | Ctrl+Shift+R | Cmd+Shift+R |
-| 打开/切换今日列表 | Ctrl+Shift+D | Cmd+Shift+D |
-| 打开/切换最近文件 | Ctrl+Shift+Q | Cmd+Shift+Q |
+| 打开/关闭今日任务清单 | Ctrl+Shift+D | Cmd+Shift+D |
+| 打开/关闭最近文件 | Ctrl+Shift+Q | Cmd+Shift+Q |
 
-Obsidian 中保存的自定义快捷键优先级更高。可以在“设置 > 快捷键”中修改或重置这些快捷键。
+快捷键可以在 Obsidian 的“设置 → 快捷键”中修改。设置界面只保留当前版本仍有作用的快捷键。
 
-重要度颜色：无 #e2ffad，低 #8ed29f，普通 #ffdf9e，高 #d53030。已完成状态使用 #0497c8。这些颜色仍可在设置中修改。
+## 安装
 
-## 安装与兼容性
+1. 从 [DaySprig Releases](https://github.com/Felix-Ashford/DaySprig/releases) 下载 main.js、manifest.json 和 styles.css。
+2. 将三个文件复制到 vault 的 .obsidian/plugins/daysprig 目录。
+3. 在 Obsidian 的“设置 → 社区插件”中启用 DaySprig。
+4. 在 DaySprig 设置中确认任务目录、归档目录、语言和日历行为。
 
-1. 从 [DaySprig 发布页面](https://github.com/Felix-Ashford/DaySprig/releases)下载 `main.js`、`manifest.json` 和 `styles.css`。
-2. 将它们复制到 vault 的 `.obsidian/plugins/daysprig` 目录中（如果使用了自定义配置目录，则复制到对应目录）。
-3. 在“设置 > 社区插件”中启用 DaySprig。如有需要，请重启 Obsidian。
-
-DaySprig 使用自己的视图标识符和数据键。应当将它设置为当前 vault 使用的任务日历。
-
-任务仍然是普通的 Markdown 笔记，不需要进行任务转换。DaySprig 只使用自己的设置和插件数据。
-
-0.1.0 版本用于初始测试。维护者会进行 Obsidian 手动验收测试。当前自动化测试只覆盖少量数据辅助函数，不能代表完整的界面或端到端兼容性。声明的最低 Obsidian 版本为 1.5.0；在正式发布或提交到社区之前，仍需要手动确认兼容性。
+任务仍然是普通 Markdown 笔记，不需要转换已有文件。首次使用前建议备份 vault，并先在测试 vault 中确认目录和日历设置。
 
 ## 本地数据
 
-设置以及清单、提醒状态保存在插件的 `data.json` 中；任务和时间记录保存在 vault 笔记中。移除的 ICS、API 和 Webhook 设置不会再被读取或执行。请勿公开你的 `data.json` 或个人 vault 内容。
+插件设置、提醒状态和每日清单保存在插件自己的 data.json 中；任务和时间字段保存在 vault 笔记内。不要将个人 vault 内容或 data.json 上传到公开仓库。
 
 ## 开发与发布
 
-使用 Node.js 22 或更高版本，并使用仓库中已提交的 `package-lock.json`：
+需要 Node.js 22 或更高版本。常用检查命令：npm ci、npm run build、npm test -- --runInBand、npm run test:build。发布打包使用 npm run release:package。
 
-    npm ci
-    npm run build
-    npm test -- --runInBand
-    npm run test:build
-
-生产构建会根据 esbuild 的实际打包输入生成第三方许可声明，并将完整的项目和依赖许可声明嵌入 `main.js`。生成的 `THIRD-PARTY-NOTICES.md` 会提交到仓库中供审查。未知许可证或缺少许可证文本都会导致构建失败。
-
-    npm run release:package
-
-该命令会创建 `dist/daysprig`，其中包含三个可安装文件和许可证声明。GitHub 标签发布会执行相同的检查并创建草稿预发布版本。请在手动验收测试完成后再发布。标签名称必须与 `manifest.json`、`package.json` 和 `versions.json` 保持一致（例如 `0.1.0`，不带 `v` 前缀）。
-
-在运行 `npm run dev` 前，将 `OBSIDIAN_PLUGIN_PATH` 设置为测试 vault 中的 daysprig 插件目录，或使用被 Git 忽略的 `.copy-files.local` 文件配置。该脚本会拒绝目标目录名称为 tasknotes 的路径。
+正式发布前仍应在 Obsidian 中手动测试日历、创建、编辑、删除、快捷键、语言切换和文件操作。
 
 ## 许可证与致谢
 
-DaySprig 修改部分的版权归 Felix-Ashford 所有（2026 年）。TaskNotes 基础代码的版权归 Callum Alpass 所有（2025 年）。两者均以 [MIT 许可证](LICENSE)发布；项目来源说明见 [NOTICE.md](NOTICE.md)。
-
-捆绑的依赖保留各自的许可证条款，详见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+DaySprig 的修改部分版权归 Felix-Ashford 所有，TaskNotes 基线版权归 Callum Alpass 所有；项目采用 [MIT License](LICENSE)。来源说明见 [NOTICE.md](NOTICE.md)，依赖许可见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
