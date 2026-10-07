@@ -17,7 +17,7 @@ DaySprig is an independently maintained derivative, not an official TaskNotes re
 - Stores task notes under \`DaySprig/Tasks\` and archived notes under \`DaySprig/Archive\` by default. Existing task properties such as status, priority, dates, recurrence, and completion records remain supported.
 - Excludes the private dark PDF exporter. Desktop only.
 
-The current implementation retains the full TaskNotes core, including optional time tracking, Pomodoro, ICS, API, Kanban, statistics, and Bases functionality. It is not a stripped-down reimplementation.
+Some TaskNotes upstream modules remain in the code, while their main commands and settings entry points are hidden from the interface. Implementations for Pomodoro, ICS, Kanban, statistics, Bases, time tracking, and API/webhooks have not all been removed; some services or views still initialize, and background behavior depends on plugin settings and existing data. DaySprig is currently a derivative that simplifies the upstream user interface; a full removal of these modules is not complete.
 
 ## Default shortcuts and colors
 
@@ -45,7 +45,7 @@ Version 0.1.0 is intended for initial testing. Manual Obsidian acceptance testin
 
 ## Data and optional integrations
 
-Settings and checklist/reminder state are stored locally in the plugin's data.json; tasks are stored in vault notes. DaySprig retains optional upstream ICS subscriptions, exports, and an HTTP API/webhooks. The API and automatic export are disabled by default. Enabling external subscriptions or webhooks can send requests to the configured services. Do not publish your data.json, credentials, or personal vault content.
+Settings and checklist/reminder state are stored locally in the plugin's data.json; tasks are stored in vault notes. The API and automatic ICS export are disabled by default, but the upstream ICS subscription, export, and HTTP API/webhook implementations remain, with their main settings entry points hidden. Existing configuration may still enable background work for these integrations. Remote subscriptions and webhooks can send requests to configured services. Do not publish your data.json, credentials, or personal vault content.
 
 ## Development and releases
 
