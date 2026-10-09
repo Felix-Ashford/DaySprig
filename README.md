@@ -103,7 +103,6 @@ Ctrl+Shift+Q 打开最近文件和常用文件界面。
 
 手动更新时，用新版安装包中的文件覆盖已有插件文件，保留原目录中的 `data.json`，以保留个人设置和清单数据。
 
-上架 Obsidian 社区插件市场后，还可以在“设置 → 社区插件 → 浏览”中搜索 DaySprig 并直接安装。目前此方式仍待完成上架审核。
 
 
 ## 本地数据
@@ -113,6 +112,9 @@ Ctrl+Shift+Q 打开最近文件和常用文件界面。
 ## 开发与发布
 
 需要 Node.js 22 或更高版本。常用检查命令：npm ci、npm run build、npm test -- --runInBand、npm run test:build。发布打包使用 npm run release:package。
+
+## 社区
+感谢 [LINUX DO](https://linux.do/) 社区提供开放、友善的技术交流平台
 
 
 ## 许可证与致谢
