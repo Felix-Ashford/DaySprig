@@ -60,10 +60,14 @@ Change these in Obsidian under Settings → Hotkeys. The settings page keeps onl
 
 ## Installation
 
-1. Download main.js, manifest.json, and styles.css from a [DaySprig release](https://github.com/Felix-Ashford/DaySprig/releases).
-2. Copy them into .obsidian/plugins/daysprig in your vault.
-3. Enable DaySprig under Obsidian Settings → Community plugins.
+1. Download `daysprig-VERSION.zip` (for example, `daysprig-0.1.0.zip`) from the assets of a [DaySprig release](https://github.com/Felix-Ashford/DaySprig/releases). GitHub's automatic “Source code (zip)” download is the source archive.
+2. Extract the archive and copy the entire `daysprig` folder into your vault's `.obsidian/plugins/` folder, or the `plugins/` folder under your custom configuration directory. The final paths should be `.obsidian/plugins/daysprig/manifest.json`, `main.js`, and `styles.css`, without an extra nested `daysprig` folder.
+3. Reload or restart Obsidian and enable DaySprig under Settings → Community plugins.
 4. Confirm the task folder, archive folder, language, and calendar behavior in DaySprig settings.
+
+For manual updates, overwrite the plugin files with the new archive and keep your existing `data.json` to preserve settings and checklist data.
+
+Installation through Settings → Community plugins → Browse will be available after DaySprig has been approved for the community directory.
 
 Tasks remain ordinary Markdown notes; no conversion is required. Back up your vault and try the configuration in a test vault before changing storage folders.
 

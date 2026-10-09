@@ -30,6 +30,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/daysprig-*.zip
             dist/daysprig/main.js
             dist/daysprig/manifest.json
             dist/daysprig/styles.css
